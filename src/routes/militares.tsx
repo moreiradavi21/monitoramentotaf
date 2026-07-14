@@ -42,8 +42,14 @@ import {
   type Militar,
 } from "@/lib/data";
 
+import { RequireAdmin } from "@/components/require-admin";
+
 export const Route = createFileRoute("/militares")({
-  component: MilitaresPage,
+  component: () => (
+    <RequireAdmin>
+      <MilitaresPage />
+    </RequireAdmin>
+  ),
 });
 
 function MilitaresPage() {

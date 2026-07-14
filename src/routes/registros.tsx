@@ -52,8 +52,14 @@ import {
   type TafResultado,
 } from "@/lib/data";
 
+import { RequireAdmin } from "@/components/require-admin";
+
 export const Route = createFileRoute("/registros")({
-  component: RegistrosPage,
+  component: () => (
+    <RequireAdmin>
+      <RegistrosPage />
+    </RequireAdmin>
+  ),
 });
 
 type Form = {

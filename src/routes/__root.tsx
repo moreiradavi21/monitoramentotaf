@@ -13,6 +13,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/lib/auth";
+import { HeaderUser } from "@/components/header-user";
 
 function NotFoundComponent() {
   return (
@@ -103,28 +105,33 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar />
-          <div className="flex flex-1 flex-col">
-            <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
-              <SidebarTrigger />
-              <div className="flex items-center gap-2">
-                <span className="font-display text-lg tracking-wider text-primary">
-                  Companhia CCAP
-                </span>
-                <span className="text-xs uppercase tracking-widest text-muted-foreground">
-                  · Controle de TAF
-                </span>
-              </div>
-            </header>
-            <main className="flex-1 p-4 md:p-6">
-              <Outlet />
-            </main>
+      <AuthProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar />
+            <div className="flex flex-1 flex-col">
+              <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
+                <SidebarTrigger />
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-lg tracking-wider text-primary">
+                    Companhia CCAP
+                  </span>
+                  <span className="hidden text-xs uppercase tracking-widest text-muted-foreground sm:inline">
+                    · Controle de TAF
+                  </span>
+                </div>
+                <div className="ml-auto">
+                  <HeaderUser />
+                </div>
+              </header>
+              <main className="flex-1 p-4 md:p-6">
+                <Outlet />
+              </main>
+            </div>
           </div>
-        </div>
-        <Toaster richColors position="top-right" />
-      </SidebarProvider>
+          <Toaster richColors position="top-right" />
+        </SidebarProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
