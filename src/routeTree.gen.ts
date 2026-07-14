@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistrosRouteImport } from './routes/registros'
 import { Route as MilitaresRouteImport } from './routes/militares'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
 const RegistrosRoute = RegistrosRouteImport.update({
@@ -23,6 +24,11 @@ const MilitaresRoute = MilitaresRouteImport.update({
   path: '/militares',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/militares' | '/registros'
+  fullPaths: '/' | '/auth' | '/militares' | '/registros'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/militares' | '/registros'
-  id: '__root__' | '/' | '/militares' | '/registros'
+  to: '/' | '/auth' | '/militares' | '/registros'
+  id: '__root__' | '/' | '/auth' | '/militares' | '/registros'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   MilitaresRoute: typeof MilitaresRoute
   RegistrosRoute: typeof RegistrosRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MilitaresRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   MilitaresRoute: MilitaresRoute,
   RegistrosRoute: RegistrosRoute,
 }
