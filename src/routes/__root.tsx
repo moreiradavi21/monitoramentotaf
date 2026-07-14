@@ -67,10 +67,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "CCAP · Controle de TAF" },
       {
         property: "og:description",
-        content: "Registro e acompanhamento do TAF da Companhia CCAP.",
+        content: "Sistema de controle do Teste de Aptidão Física (TAF) da Companhia CCAP — 1º, 2º e 3º TAF em 1ª e 2ª chamada, por posto e graduação.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CCAP · Controle de TAF" },
+      { name: "twitter:description", content: "Sistema de controle do Teste de Aptidão Física (TAF) da Companhia CCAP — 1º, 2º e 3º TAF em 1ª e 2ª chamada, por posto e graduação." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c56d6f8f-b5dc-40e1-8a3d-87eb503d74fe/id-preview-dcf72ee1--41365671-7322-4e2e-8d52-92d84a1c5ebe.lovable.app-1784042883863.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c56d6f8f-b5dc-40e1-8a3d-87eb503d74fe/id-preview-dcf72ee1--41365671-7322-4e2e-8d52-92d84a1c5ebe.lovable.app-1784042883863.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
