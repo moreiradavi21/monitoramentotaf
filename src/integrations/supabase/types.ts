@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      militares: {
+        Row: {
+          created_at: string
+          id: string
+          identificacao: string | null
+          nome: string
+          posto: Database["public"]["Enums"]["posto_graduacao"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identificacao?: string | null
+          nome: string
+          posto: Database["public"]["Enums"]["posto_graduacao"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identificacao?: string | null
+          nome?: string
+          posto?: Database["public"]["Enums"]["posto_graduacao"]
+        }
+        Relationships: []
+      }
+      taf_resultados: {
+        Row: {
+          abdominal: number | null
+          barra: number | null
+          chamada: number
+          corrida_metros: number | null
+          created_at: string
+          data_aplicacao: string
+          flexao: number | null
+          id: string
+          mencao: string | null
+          militar_id: string
+          nota_abdominal: number | null
+          nota_barra: number | null
+          nota_corrida: number | null
+          nota_final: number | null
+          nota_flexao: number | null
+          observacoes: string | null
+          taf_numero: number
+        }
+        Insert: {
+          abdominal?: number | null
+          barra?: number | null
+          chamada: number
+          corrida_metros?: number | null
+          created_at?: string
+          data_aplicacao?: string
+          flexao?: number | null
+          id?: string
+          mencao?: string | null
+          militar_id: string
+          nota_abdominal?: number | null
+          nota_barra?: number | null
+          nota_corrida?: number | null
+          nota_final?: number | null
+          nota_flexao?: number | null
+          observacoes?: string | null
+          taf_numero: number
+        }
+        Update: {
+          abdominal?: number | null
+          barra?: number | null
+          chamada?: number
+          corrida_metros?: number | null
+          created_at?: string
+          data_aplicacao?: string
+          flexao?: number | null
+          id?: string
+          mencao?: string | null
+          militar_id?: string
+          nota_abdominal?: number | null
+          nota_barra?: number | null
+          nota_corrida?: number | null
+          nota_final?: number | null
+          nota_flexao?: number | null
+          observacoes?: string | null
+          taf_numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taf_resultados_militar_id_fkey"
+            columns: ["militar_id"]
+            isOneToOne: false
+            referencedRelation: "militares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +114,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      posto_graduacao: "oficial" | "sargento" | "cabo" | "soldado" | "recruta"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +241,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      posto_graduacao: ["oficial", "sargento", "cabo", "soldado", "recruta"],
+    },
   },
 } as const
