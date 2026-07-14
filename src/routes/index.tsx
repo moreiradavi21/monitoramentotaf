@@ -42,12 +42,7 @@ function Dashboard() {
       const results = resultsForEdicao.filter((r) =>
         list.some((m) => m.id === r.militar_id),
       );
-      const notas = results
-        .map((r) => Number(r.nota_final))
-        .filter((n) => !Number.isNaN(n) && n > 0);
-      const media = notas.length
-        ? notas.reduce((a, b) => a + b, 0) / notas.length
-        : null;
+      const mm = mencaoMedia(results.map((r) => r.mencao));
       const insuf = results.filter((r) => isInsuf(r.mencao)).length;
       return {
         posto: p.value as Posto,
@@ -55,7 +50,7 @@ function Dashboard() {
         total: list.length,
         realizados: results.length,
         pendentes: list.length - results.length,
-        media,
+        mencao: mm,
         insuf,
       };
     });
@@ -64,12 +59,10 @@ function Dashboard() {
   const totalMilitares = militares.length;
   const totalRealizados = resultsForEdicao.length;
   const totalInsuf = resultsForEdicao.filter((r) => isInsuf(r.mencao)).length;
-  const mediaGeral = (() => {
-    const notas = resultsForEdicao
-      .map((r) => Number(r.nota_final))
-      .filter((n) => !Number.isNaN(n) && n > 0);
-    return notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : null;
-  })();
+  const mencaoGeral = useMemo(
+    () => mencaoMedia(resultsForEdicao.map((r) => r.mencao)),
+    [resultsForEdicao],
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
