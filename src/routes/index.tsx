@@ -127,8 +127,15 @@ function Dashboard() {
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Nota média"
-          value={mediaGeral != null ? mediaGeral.toFixed(2) : "—"}
+          label="Menção média"
+          value={
+            <span
+              className={`inline-block rounded border px-2 py-0.5 text-2xl font-display ${mencaoColor(mencaoGeral.short)}`}
+            >
+              {mencaoGeral.short}
+            </span>
+          }
+          hint={mencaoGeral.label !== "—" ? mencaoGeral.label : undefined}
         />
         <StatCard
           icon={<AlertTriangle className="h-4 w-4" />}
@@ -174,17 +181,23 @@ function Dashboard() {
                 <div className="rounded-md border border-border bg-muted/40 p-3">
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs uppercase tracking-widest text-muted-foreground">
-                      Nota média
+                      Menção média
                     </span>
-                    <span className="font-display text-2xl text-primary">
-                      {row.media != null ? row.media.toFixed(2) : "—"}
+                    <span
+                      className={`inline-block rounded border px-2 py-0.5 font-display text-2xl ${mencaoColor(row.mencao.short)}`}
+                    >
+                      {row.mencao.short}
                     </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{row.mencao.label !== "—" ? row.mencao.label : "Sem dados"}</span>
+                    <span>{row.mencao.score != null ? row.mencao.score.toFixed(2) : ""}</span>
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">
                     <div
                       className="h-full bg-gold transition-all"
                       style={{
-                        width: `${row.media != null ? Math.min(100, (row.media / 10) * 100) : 0}%`,
+                        width: `${row.mencao.score != null ? Math.min(100, (row.mencao.score / 5) * 100) : 0}%`,
                       }}
                     />
                   </div>
