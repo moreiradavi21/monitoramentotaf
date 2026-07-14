@@ -41,6 +41,7 @@ import {
   CHAMADAS,
   mencaoParaNota,
   mencaoColor,
+  extractMencoes,
   type Posto,
 } from "@/lib/taf";
 import {
@@ -460,30 +461,32 @@ function RegistrosPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
-                <th className="px-4 py-2">Militar</th>
-                <th className="px-4 py-2">Categoria</th>
-                <th className="px-4 py-2">TAF</th>
-                <th className="px-4 py-2">Chamada</th>
-                <th className="px-4 py-2">Data</th>
-                <th className="px-4 py-2 text-right">Nota</th>
-                <th className="px-4 py-2">Menção</th>
-                <th className="px-4 py-2"></th>
+                <th className="px-3 py-2">Militar</th>
+                <th className="px-3 py-2">Categoria</th>
+                <th className="px-2 py-2 text-center">TAF</th>
+                <th className="px-2 py-2 text-center">Chamada</th>
+                <th className="px-2 py-2 text-center" title="Corrida">COR</th>
+                <th className="px-2 py-2 text-center" title="Flexão">FLEX</th>
+                <th className="px-2 py-2 text-center" title="Abdominal">ABD</th>
+                <th className="px-2 py-2 text-center" title="Barra">BAR</th>
+                <th className="px-2 py-2 text-center" title="Menção final">FIN</th>
+                <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">
                     Carregando...
                   </td>
                 </tr>
               )}
               {!isLoading && filtrados.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
@@ -491,28 +494,28 @@ function RegistrosPage() {
               {filtrados.map((r) => {
                 const m = militarById.get(r.militar_id);
                 const p = POSTOS.find((x) => x.value === m?.posto);
+                const mc = extractMencoes(r.observacoes, r.mencao);
+                const cell = (v: string) => (
+                  <span
+                    className={`inline-block min-w-[2.25rem] rounded border px-1.5 py-0.5 text-xs font-medium ${mencaoColor(v)}`}
+                  >
+                    {v}
+                  </span>
+                );
                 return (
                   <tr key={r.id} className="border-b border-border/50 hover:bg-muted/40">
-                    <td className="px-4 py-2 font-medium">{m?.nome ?? "—"}</td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {p?.label ?? "—"}
+                    <td className="px-3 py-2 font-medium">{m?.nome ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {m?.identificacao ?? p?.label ?? "—"}
                     </td>
-                    <td className="px-4 py-2">{r.taf_numero}º</td>
-                    <td className="px-4 py-2">{r.chamada}ª</td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {new Date(r.data_aplicacao).toLocaleDateString("pt-BR")}
-                    </td>
-                    <td className="px-4 py-2 text-right font-display text-base text-primary">
-                      {r.nota_final != null ? Number(r.nota_final).toFixed(2) : "—"}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span
-                        className={`inline-block rounded border px-2 py-0.5 text-xs ${mencaoColor(r.mencao)}`}
-                      >
-                        {r.mencao ?? "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-2 py-2 text-center">{r.taf_numero}º</td>
+                    <td className="px-2 py-2 text-center">{r.chamada}ª</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.COR)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.FLEX)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.ABD)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.BAR)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.FIN)}</td>
+                    <td className="px-3 py-2 text-right">
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
                           <Pencil className="h-4 w-4" />
