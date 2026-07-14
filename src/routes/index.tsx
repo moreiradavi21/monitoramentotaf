@@ -15,6 +15,12 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
+function isInsuf(mencao: string | null | undefined): boolean {
+  if (!mencao) return false;
+  const m = mencao.trim().toUpperCase();
+  return m === "I" || m === "INSUF" || m === "INSUFICIENTE";
+}
+
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
@@ -42,7 +48,7 @@ function Dashboard() {
       const media = notas.length
         ? notas.reduce((a, b) => a + b, 0) / notas.length
         : null;
-      const insuf = results.filter((r) => r.mencao === "Insuficiente").length;
+      const insuf = results.filter((r) => isInsuf(r.mencao)).length;
       return {
         posto: p.value as Posto,
         label: p.plural,
@@ -57,7 +63,7 @@ function Dashboard() {
 
   const totalMilitares = militares.length;
   const totalRealizados = resultsForEdicao.length;
-  const totalInsuf = resultsForEdicao.filter((r) => r.mencao === "Insuficiente").length;
+  const totalInsuf = resultsForEdicao.filter((r) => isInsuf(r.mencao)).length;
   const mediaGeral = (() => {
     const notas = resultsForEdicao
       .map((r) => Number(r.nota_final))
