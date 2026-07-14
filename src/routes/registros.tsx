@@ -41,6 +41,7 @@ import {
   CHAMADAS,
   mencaoParaNota,
   mencaoColor,
+  extractMencoes,
   type Posto,
 } from "@/lib/taf";
 import {
