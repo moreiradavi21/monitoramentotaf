@@ -478,6 +478,13 @@ function RegistrosPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {isAdmin && (
+          <Button variant="outline" onClick={exportarPlanilha} disabled={filtrados.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Baixar planilha
+          </Button>
+        )}
+        </div>
       </div>
 
       {militares.length === 0 && (
