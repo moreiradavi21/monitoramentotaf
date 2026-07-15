@@ -715,7 +715,6 @@ function RegistrosPage() {
               )}
               {filtrados.map((r) => {
                 const m = militarById.get(r.militar_id);
-                const p = POSTOS.find((x) => x.value === m?.posto);
                 const mc = extractMencoes(r.observacoes, r.mencao);
                 const cell = (v: string, raw?: number | null, suffix = "") => (
                   <div className="flex flex-col items-center gap-0.5">
