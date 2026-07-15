@@ -66,12 +66,14 @@ function MilitaresPage() {
   const [nome, setNome] = useState("");
   const [posto, setPosto] = useState<Posto>("soldado");
   const [ident, setIdent] = useState("");
+  const [dataNasc, setDataNasc] = useState("");
 
   function openNew() {
     setEditing(null);
     setNome("");
     setPosto("soldado");
     setIdent("");
+    setDataNasc("");
     setOpen(true);
   }
 
@@ -80,6 +82,7 @@ function MilitaresPage() {
     setNome(m.nome);
     setPosto(m.posto);
     setIdent(m.identificacao ?? "");
+    setDataNasc(m.data_nascimento ?? "");
     setOpen(true);
   }
 
