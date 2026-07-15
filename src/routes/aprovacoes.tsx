@@ -35,6 +35,15 @@ type Row = {
   created_at: string;
 };
 
+const roleLabel = (r: string | null) =>
+  r === "administrador"
+    ? "Administrador"
+    : r === "avaliador"
+      ? "Avaliador"
+      : r === "companhia"
+        ? "Companhia"
+        : "—";
+
 function AprovacoesPage() {
   const qc = useQueryClient();
   const { data: profiles = [], isLoading } = useQuery({
@@ -53,11 +62,8 @@ function AprovacoesPage() {
 
   const approve = useMutation({
     mutationFn: async ({ id, role }: { id: string; role: string }) => {
-      const dbRole = role === "administrador"
-        ? "admin"
-        : role === "avaliador"
-          ? "avaliador"
-          : "user";
+      const dbRole =
+        role === "administrador" ? "admin" : role === "avaliador" ? "avaliador" : "user";
       const { error } = await supabase.rpc("approve_profile" as any, {
         _profile_id: id,
         _role: dbRole,
@@ -85,25 +91,16 @@ function AprovacoesPage() {
     onError: (e: any) => toast.error(e?.message ?? "Falha ao revogar."),
   });
 
-  const roleLabel = (r: string | null) =>
-    r === "administrador"
-      ? "Militar Administrador"
-      : r === "avaliador"
-        ? "Militar Avaliador"
-        : r === "companhia"
-          ? "Militar da Companhia"
-          : "—";
-
   const pending = profiles.filter((p) => !p.approved);
   const approved = profiles.filter((p) => p.approved);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
           Administração
         </p>
-        <h1 className="mt-1 text-3xl font-display tracking-wide text-primary">
+        <h1 className="mt-1 text-2xl font-display tracking-wide text-primary sm:text-3xl">
           Aprovações de contas
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -111,119 +108,118 @@ function AprovacoesPage() {
         </p>
       </div>
 
+      {/* Pendentes */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="font-display tracking-wide text-primary">
-            Pendentes ({pending.length})
+            Pendentes{" "}
+            <Badge variant="outline" className="ml-1 font-normal">
+              {pending.length}
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          {isLoading ? (
-            <div className="p-4 text-sm text-muted-foreground">Carregando...</div>
-          ) : pending.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">
-              Nenhuma conta pendente.
-            </div>
-          ) : (
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
-                  <th className="px-3 py-2">Nome</th>
-                  <th className="px-3 py-2">Posto</th>
-                  <th className="px-3 py-2">Solicitado</th>
-                  <th className="px-3 py-2">Aprovar como</th>
-                  <th className="px-3 py-2 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pending.map((p) => {
-                  const chosen = pickedRole[p.id] ?? p.requested_role ?? "companhia";
-                  return (
-                    <tr key={p.id} className="border-b border-border/50">
-                      <td className="px-3 py-2 font-medium">{p.nome ?? "—"}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{p.posto ?? "—"}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {roleLabel(p.requested_role)}
-                      </td>
-                      <td className="px-3 py-2">
-                        <Select
-                          value={chosen}
-                          onValueChange={(v) =>
-                            setPickedRole((s) => ({ ...s, [p.id]: v }))
-                          }
-                        >
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="companhia">Militar da Companhia</SelectItem>
-                            <SelectItem value="avaliador">Militar Avaliador</SelectItem>
-                            <SelectItem value="administrador">Militar Administrador</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <Button
-                          size="sm"
-                          onClick={() => approve.mutate({ id: p.id, role: chosen })}
-                          disabled={approve.isPending}
-                        >
-                          <UserCheck className="mr-1 h-4 w-4" />
-                          Aprovar
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <CardContent className="space-y-3 pt-0">
+          {isLoading && (
+            <p className="text-sm text-muted-foreground">Carregando...</p>
           )}
+          {!isLoading && pending.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Nenhuma conta pendente.
+            </p>
+          )}
+          {pending.map((p) => {
+            const chosen = pickedRole[p.id] ?? p.requested_role ?? "companhia";
+            return (
+              <div
+                key={p.id}
+                className="rounded-lg border border-border bg-muted/30 p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium">{p.nome ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {p.posto ?? "—"} · Solicitou:{" "}
+                      <span className="font-medium text-foreground">
+                        {roleLabel(p.requested_role)}
+                      </span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="shrink-0 border-amber-400/50 text-amber-600 dark:text-amber-400">
+                    Pendente
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select
+                    value={chosen}
+                    onValueChange={(v) =>
+                      setPickedRole((s) => ({ ...s, [p.id]: v }))
+                    }
+                  >
+                    <SelectTrigger className="flex-1 min-w-[160px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="companhia">Militar da Companhia</SelectItem>
+                      <SelectItem value="avaliador">Avaliador</SelectItem>
+                      <SelectItem value="administrador">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    onClick={() => approve.mutate({ id: p.id, role: chosen })}
+                    disabled={approve.isPending}
+                    className="shrink-0"
+                  >
+                    <UserCheck className="mr-1 h-4 w-4" />
+                    Aprovar
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
+      {/* Aprovados */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="font-display tracking-wide text-primary">
-            Aprovados ({approved.length})
+            Aprovados{" "}
+            <Badge variant="outline" className="ml-1 font-normal">
+              {approved.length}
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          {approved.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">Ninguém aprovado.</div>
-          ) : (
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
-                  <th className="px-3 py-2">Nome</th>
-                  <th className="px-3 py-2">Posto</th>
-                  <th className="px-3 py-2">Papel solicitado</th>
-                  <th className="px-3 py-2 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {approved.map((p) => (
-                  <tr key={p.id} className="border-b border-border/50">
-                    <td className="px-3 py-2 font-medium">{p.nome ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{p.posto ?? "—"}</td>
-                    <td className="px-3 py-2">
-                      <Badge variant="outline">{roleLabel(p.requested_role)}</Badge>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => revoke.mutate(p.id)}
-                        disabled={revoke.isPending}
-                      >
-                        <UserX className="mr-1 h-4 w-4" />
-                        Revogar
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <CardContent className="space-y-2 pt-0">
+          {approved.length === 0 && (
+            <p className="text-sm text-muted-foreground">Ninguém aprovado.</p>
           )}
+          {approved.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3"
+            >
+              <div className="min-w-0">
+                <div className="font-medium truncate">{p.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {p.posto ?? "—"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge variant="outline">{roleLabel(p.requested_role)}</Badge>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => revoke.mutate(p.id)}
+                  disabled={revoke.isPending}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <UserX className="mr-1 h-4 w-4" />
+                  Revogar
+                </Button>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>
