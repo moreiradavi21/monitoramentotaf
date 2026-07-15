@@ -91,13 +91,14 @@ function MilitaresPage() {
 
   async function handleSave() {
     if (!nome.trim()) {
-      toast.error("Informe o nome do militar.");
+      toast.error("Informe o nome completo do militar.");
       return;
     }
     try {
       await save.mutateAsync({
         id: editing?.id,
         nome: nome.trim(),
+        nome_guerra: nomeGuerra.trim() || null,
         posto,
         identificacao: ident.trim() || null,
         data_nascimento: dataNasc || null,
