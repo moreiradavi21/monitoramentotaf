@@ -144,6 +144,22 @@ function RegistrosPage() {
     return notas.reduce((a, b) => a + b, 0) / notas.length;
   }, [form.nota_flexao, form.nota_abdominal, form.nota_corrida, form.nota_barra]);
 
+  // Cálculo automático de menções por idade a partir das tabelas do Anexo A
+  const militarSel = militares.find((m) => m.id === form.militar_id);
+  const idade = calcIdade(militarSel?.data_nascimento ?? null, form.data_aplicacao);
+  const mencoesAuto = useMemo(() => {
+    return {
+      FLEX: mencaoPorIdade("flexao", idade, num(form.flexao)),
+      ABD: mencaoPorIdade("abdominal", idade, num(form.abdominal)),
+      COR: mencaoPorIdade("corrida", idade, num(form.corrida_metros)),
+      BAR: mencaoPorIdade("barra", idade, num(form.barra)),
+    };
+  }, [idade, form.flexao, form.abdominal, form.corrida_metros, form.barra]);
+  const mencaoFinalAuto = useMemo(
+    () => mencaoFinalDe([mencoesAuto.FLEX, mencoesAuto.ABD, mencoesAuto.COR, mencoesAuto.BAR]),
+    [mencoesAuto],
+  );
+
   async function handleSave() {
     if (!form.militar_id) {
       toast.error("Selecione o militar.");
@@ -153,7 +169,17 @@ function RegistrosPage() {
     const mencao =
       form.mencao && form.mencao.trim().length
         ? form.mencao.trim()
-        : mencaoParaNota(finalNota);
+        : mencaoFinalAuto ?? mencaoParaNota(finalNota);
+    // Observações: mescla o texto do usuário com as menções calculadas por exercício
+    const partes: string[] = [];
+    (["FLEX", "ABD", "COR", "BAR"] as const).forEach((k) => {
+      if (mencoesAuto[k]) partes.push(`${k}:${mencoesAuto[k]}`);
+    });
+    const obsAuto = partes.join(" ");
+    const obsUser = (form.observacoes ?? "")
+      .replace(/(FLEX|ABD|COR|BAR)\s*:\s*[A-Za-zÀ-ÿ]+/gi, "")
+      .trim();
+    const observacoes = [obsAuto, obsUser].filter(Boolean).join(" ").trim() || null;
     try {
       await save.mutateAsync({
         id: form.id,
@@ -171,7 +197,7 @@ function RegistrosPage() {
         nota_barra: num(form.nota_barra),
         nota_final: finalNota,
         mencao: mencao === "—" ? null : mencao,
-        observacoes: form.observacoes?.trim() || null,
+        observacoes,
       });
       toast.success(form.id ? "Registro atualizado." : "TAF registrado.");
       setOpen(false);
