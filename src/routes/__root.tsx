@@ -211,6 +211,7 @@ function BottomNav() {
     items.push({ url: "/aprovacoes", icon: UserCheck, label: "Aprovações" });
 
   } else if (role === "avaliador") {
+    items.push({ url: "/militares", icon: Users, label: "Militares" });
     items.push({ url: "/registros", icon: ClipboardList, label: "Registros" });
   } else if (isCompanhia) {
     items.push({ url: "/meus-resultados", icon: BadgeCheck, label: "Meus TAFs" });

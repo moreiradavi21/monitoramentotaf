@@ -35,6 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import { POSTOS, postoLabel, type Posto } from "@/lib/taf";
+import { useAuth } from "@/lib/auth";
 import {
   useDeleteMilitar,
   useMilitares,
@@ -42,17 +43,18 @@ import {
   type Militar,
 } from "@/lib/data";
 
-import { RequireAdmin } from "@/components/require-admin";
+import { RequireAvaliador } from "@/components/require-admin";
 
 export const Route = createFileRoute("/militares")({
   component: () => (
-    <RequireAdmin>
+    <RequireAvaliador>
       <MilitaresPage />
-    </RequireAdmin>
+    </RequireAvaliador>
   ),
 });
 
 function MilitaresPage() {
+  const { isAdmin } = useAuth();
   const { data: militares = [], isLoading } = useMilitares();
   const save = useSaveMilitar();
   const del = useDeleteMilitar();
@@ -299,13 +301,15 @@ function MilitaresPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setConfirmDelete(m)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setConfirmDelete(m)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}

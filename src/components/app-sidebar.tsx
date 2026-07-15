@@ -25,28 +25,31 @@ import {
 import { useAuth } from "@/lib/auth";
 
 /**
- * Sidebar de navegação — visível apenas para administradores em telas lg+.
- * Avaliadores e militares da companhia usam a barra de navegação inferior (BottomNav)
+ * Sidebar de navegação — visível para administradores e avaliadores em telas lg+.
+ * Militares da companhia usam a barra de navegação inferior (BottomNav)
  * definida em __root.tsx.
  */
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { isAdmin, approved } = useAuth();
+  const { isAdmin, isAvaliador, approved } = useAuth();
 
-  // Sidebar exclusiva para admin; non-admin nunca vê a barra lateral
-  if (!isAdmin || !approved) return null;
+  if (!isAvaliador || !approved) return null;
 
   const isActive = (p: string) =>
     p === "/" ? pathname === "/" : pathname.startsWith(p);
 
-  const items = [
-    { title: "Painel TAF", url: "/", icon: LayoutDashboard },
-    { title: "Militares", url: "/militares", icon: Users },
-    { title: "Registros", url: "/registros", icon: ClipboardList },
-    { title: "Importar", url: "/importar", icon: Upload },
-    { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
-
-  ];
+  const items = isAdmin
+    ? [
+        { title: "Painel TAF", url: "/", icon: LayoutDashboard },
+        { title: "Militares", url: "/militares", icon: Users },
+        { title: "Registros", url: "/registros", icon: ClipboardList },
+        { title: "Importar", url: "/importar", icon: Upload },
+        { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
+      ]
+    : [
+        { title: "Militares", url: "/militares", icon: Users },
+        { title: "Registros", url: "/registros", icon: ClipboardList },
+      ];
 
   return (
     <Sidebar collapsible="icon" className="hidden lg:flex">
