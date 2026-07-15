@@ -61,6 +61,7 @@ import {
   useDeleteResultado,
   useMilitares,
   useResultados,
+  useSaveMilitar,
   useSaveResultado,
   type TafResultado,
 } from "@/lib/data";
