@@ -321,15 +321,18 @@ function RegistrosPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" />
-                        <Input
-                          value={militarSearch}
-                          onChange={(e) => setMilitarSearch(e.target.value)}
-                          placeholder="Buscar militar pelo nome..."
-                          className="pl-9"
-                          autoComplete="off"
-                        />
+                      <div className="sticky top-0 z-20 -mx-1 bg-background/95 px-1 pb-2 pt-1 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+                        <div className="relative">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 opacity-70" />
+                          <Input
+                            value={militarSearch}
+                            onChange={(e) => setMilitarSearch(e.target.value)}
+                            placeholder="Buscar militar pelo nome..."
+                            className="pl-9"
+                            autoComplete="off"
+                            inputMode="search"
+                          />
+                        </div>
                       </div>
                       <div className="max-h-52 overflow-y-auto rounded-md border">
                         {(() => {
