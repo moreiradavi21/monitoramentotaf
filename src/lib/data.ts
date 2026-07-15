@@ -7,6 +7,7 @@ export type Militar = {
   nome: string;
   posto: Posto;
   identificacao: string | null;
+  data_nascimento: string | null;
   created_at: string;
 };
 
