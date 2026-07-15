@@ -160,14 +160,7 @@ function RegistrosPage() {
     return Number.isNaN(n) ? null : n;
   };
 
-  // auto media
-  const autoMedia = useMemo(() => {
-    const notas = [form.nota_flexao, form.nota_abdominal, form.nota_corrida, form.nota_barra]
-      .map(num)
-      .filter((n): n is number => n != null);
-    if (!notas.length) return null;
-    return notas.reduce((a, b) => a + b, 0) / notas.length;
-  }, [form.nota_flexao, form.nota_abdominal, form.nota_corrida, form.nota_barra]);
+  // auto media removida — nota não é considerada.
 
   // Cálculo automático de menções por idade a partir das tabelas do Anexo A
   const militarSel = militares.find((m) => m.id === form.militar_id);
