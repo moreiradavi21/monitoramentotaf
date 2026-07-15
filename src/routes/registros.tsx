@@ -44,6 +44,7 @@ import {
   extractMencoes,
   type Posto,
 } from "@/lib/taf";
+import { calcIdade, mencaoPorIdade, mencaoFinalDe } from "@/lib/indices";
 import {
   useDeleteResultado,
   useMilitares,
