@@ -549,6 +549,87 @@ function RegistrosPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={novoMilitarOpen} onOpenChange={setNovoMilitarOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-display tracking-wide">
+                Cadastrar novo militar
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input
+                  value={novoMilitar.nome}
+                  onChange={(e) => setNovoMilitar({ ...novoMilitar, nome: e.target.value })}
+                  placeholder="Nome completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Posto / Graduação</Label>
+                <Select
+                  value={novoMilitar.posto}
+                  onValueChange={(v) => setNovoMilitar({ ...novoMilitar, posto: v as Posto })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {POSTOS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Data de nascimento</Label>
+                <Input
+                  type="date"
+                  value={novoMilitar.data_nascimento}
+                  onChange={(e) =>
+                    setNovoMilitar({ ...novoMilitar, data_nascimento: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNovoMilitarOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!novoMilitar.nome.trim()) {
+                    toast.error("Informe o nome.");
+                    return;
+                  }
+                  try {
+                    const created: any = await saveMilitar.mutateAsync({
+                      nome: novoMilitar.nome.trim(),
+                      posto: novoMilitar.posto,
+                      data_nascimento: novoMilitar.data_nascimento || null,
+                    });
+                    toast.success("Militar cadastrado.");
+                    setNovoMilitarOpen(false);
+                    setMilitarSearch("");
+                    // Tenta vincular imediatamente pelo id retornado; senão, pelo nome
+                    if (created?.id) {
+                      setForm((f) => ({ ...f, militar_id: created.id }));
+                    }
+                  } catch (e: any) {
+                    toast.error(e?.message ?? "Erro ao cadastrar militar.");
+                  }
+                }}
+                disabled={saveMilitar.isPending}
+              >
+                {saveMilitar.isPending ? "Salvando..." : "Cadastrar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {isAdmin && (
           <Button variant="outline" onClick={exportarPlanilha} disabled={filtrados.length === 0}>
             <Download className="mr-2 h-4 w-4" />
