@@ -130,7 +130,7 @@ export function useSaveResultado() {
         avaliador_id?: string | null;
       },
     ) => {
-      const payload: Record<string, unknown> = {
+      const payload: any = {
         militar_id: r.militar_id,
         taf_numero: r.taf_numero,
         chamada: r.chamada,
