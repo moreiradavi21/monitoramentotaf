@@ -586,12 +586,17 @@ function RegistrosPage() {
                 const m = militarById.get(r.militar_id);
                 const p = POSTOS.find((x) => x.value === m?.posto);
                 const mc = extractMencoes(r.observacoes, r.mencao);
-                const cell = (v: string) => (
-                  <span
-                    className={`inline-block min-w-[2.25rem] rounded border px-1.5 py-0.5 text-xs font-medium ${mencaoColor(v)}`}
-                  >
-                    {v}
-                  </span>
+                const cell = (v: string, raw?: number | null, suffix = "") => (
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span
+                      className={`inline-block min-w-[2.25rem] rounded border px-1.5 py-0.5 text-xs font-medium ${mencaoColor(v)}`}
+                    >
+                      {v}
+                    </span>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">
+                      {raw == null ? "—" : `${raw}${suffix}`}
+                    </span>
+                  </div>
                 );
                 return (
                   <tr key={r.id} className="border-b border-border/50 hover:bg-muted/40">
@@ -601,11 +606,15 @@ function RegistrosPage() {
                     </td>
                     <td className="px-2 py-2 text-center">{r.taf_numero}º</td>
                     <td className="px-2 py-2 text-center">{r.chamada}ª</td>
-                    <td className="px-2 py-2 text-center">{cell(mc.COR)}</td>
-                    <td className="px-2 py-2 text-center">{cell(mc.FLEX)}</td>
-                    <td className="px-2 py-2 text-center">{cell(mc.ABD)}</td>
-                    <td className="px-2 py-2 text-center">{cell(mc.BAR)}</td>
-                    <td className="px-2 py-2 text-center">{cell(mc.FIN)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.COR, r.corrida_metros, "m")}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.FLEX, r.flexao)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.ABD, r.abdominal)}</td>
+                    <td className="px-2 py-2 text-center">{cell(mc.BAR, r.barra)}</td>
+                    <td className="px-2 py-2 text-center">
+                      <span className={`inline-block min-w-[2.25rem] rounded border px-1.5 py-0.5 text-xs font-medium ${mencaoColor(mc.FIN)}`}>
+                        {mc.FIN}
+                      </span>
+                    </td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
