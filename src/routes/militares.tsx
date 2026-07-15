@@ -64,6 +64,7 @@ function MilitaresPage() {
   const [q, setQ] = useState("");
 
   const [nome, setNome] = useState("");
+  const [nomeGuerra, setNomeGuerra] = useState("");
   const [posto, setPosto] = useState<Posto>("soldado");
   const [ident, setIdent] = useState("");
   const [dataNasc, setDataNasc] = useState("");
@@ -71,6 +72,7 @@ function MilitaresPage() {
   function openNew() {
     setEditing(null);
     setNome("");
+    setNomeGuerra("");
     setPosto("soldado");
     setIdent("");
     setDataNasc("");
@@ -80,6 +82,7 @@ function MilitaresPage() {
   function openEdit(m: Militar) {
     setEditing(m);
     setNome(m.nome);
+    setNomeGuerra(m.nome_guerra ?? "");
     setPosto(m.posto);
     setIdent(m.identificacao ?? "");
     setDataNasc(m.data_nascimento ?? "");
@@ -88,13 +91,14 @@ function MilitaresPage() {
 
   async function handleSave() {
     if (!nome.trim()) {
-      toast.error("Informe o nome do militar.");
+      toast.error("Informe o nome completo do militar.");
       return;
     }
     try {
       await save.mutateAsync({
         id: editing?.id,
         nome: nome.trim(),
+        nome_guerra: nomeGuerra.trim() || null,
         posto,
         identificacao: ident.trim() || null,
         data_nascimento: dataNasc || null,
@@ -160,9 +164,19 @@ function MilitaresPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label>Nome de guerra / Nome completo</Label>
-                <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Nome completo</Label>
+                  <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome de guerra</Label>
+                  <Input
+                    value={nomeGuerra}
+                    onChange={(e) => setNomeGuerra(e.target.value)}
+                    placeholder="Ex.: SILVA"
+                  />
+                </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -273,11 +287,9 @@ function MilitaresPage() {
                     >
                       <div>
                         <div className="font-medium">{m.nome}</div>
-                        {m.identificacao && (
-                          <div className="text-xs text-muted-foreground">
-                            {m.identificacao}
-                          </div>
-                        )}
+                        <div className="text-xs text-muted-foreground">
+                          {m.nome_guerra ? `NG: ${m.nome_guerra}` : m.identificacao ?? "—"}
+                        </div>
                       </div>
                       <div className="flex gap-1">
                         <Button

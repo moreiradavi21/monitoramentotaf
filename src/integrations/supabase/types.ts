@@ -21,6 +21,7 @@ export type Database = {
           id: string
           identificacao: string | null
           nome: string
+          nome_guerra: string | null
           posto: Database["public"]["Enums"]["posto_graduacao"]
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           id?: string
           identificacao?: string | null
           nome: string
+          nome_guerra?: string | null
           posto: Database["public"]["Enums"]["posto_graduacao"]
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           id?: string
           identificacao?: string | null
           nome?: string
+          nome_guerra?: string | null
           posto?: Database["public"]["Enums"]["posto_graduacao"]
         }
         Relationships: []

@@ -51,7 +51,6 @@ import {
   POSTOS,
   TAF_NUMEROS,
   CHAMADAS,
-  mencaoParaNota,
   mencaoColor,
   extractMencoes,
   type Posto,
@@ -113,8 +112,9 @@ function RegistrosPage() {
   const [militarPickerOpen, setMilitarPickerOpen] = useState(false);
   const [militarSearch, setMilitarSearch] = useState("");
   const [novoMilitarOpen, setNovoMilitarOpen] = useState(false);
-  const [novoMilitar, setNovoMilitar] = useState<{ nome: string; posto: Posto; data_nascimento: string }>({
+  const [novoMilitar, setNovoMilitar] = useState<{ nome: string; nome_guerra: string; posto: Posto; data_nascimento: string }>({
     nome: "",
+    nome_guerra: "",
     posto: "soldado",
     data_nascimento: "",
   });
@@ -159,14 +159,7 @@ function RegistrosPage() {
     return Number.isNaN(n) ? null : n;
   };
 
-  // auto media
-  const autoMedia = useMemo(() => {
-    const notas = [form.nota_flexao, form.nota_abdominal, form.nota_corrida, form.nota_barra]
-      .map(num)
-      .filter((n): n is number => n != null);
-    if (!notas.length) return null;
-    return notas.reduce((a, b) => a + b, 0) / notas.length;
-  }, [form.nota_flexao, form.nota_abdominal, form.nota_corrida, form.nota_barra]);
+  // auto media removida — nota não é considerada.
 
   // Cálculo automático de menções por idade a partir das tabelas do Anexo A
   const militarSel = militares.find((m) => m.id === form.militar_id);
@@ -189,11 +182,10 @@ function RegistrosPage() {
       toast.error("Selecione o militar.");
       return;
     }
-    const finalNota = num(form.nota_final) ?? autoMedia;
     const mencao =
       form.mencao && form.mencao.trim().length
         ? form.mencao.trim()
-        : mencaoFinalAuto ?? mencaoParaNota(finalNota);
+        : mencaoFinalAuto ?? null;
     // Observações: mescla o texto do usuário com as menções calculadas por exercício
     const partes: string[] = [];
     (["FLEX", "ABD", "COR", "BAR"] as const).forEach((k) => {
@@ -215,11 +207,11 @@ function RegistrosPage() {
         abdominal: num(form.abdominal),
         corrida_metros: num(form.corrida_metros),
         barra: num(form.barra),
-        nota_flexao: num(form.nota_flexao),
-        nota_abdominal: num(form.nota_abdominal),
-        nota_corrida: num(form.nota_corrida),
-        nota_barra: num(form.nota_barra),
-        nota_final: finalNota,
+        nota_flexao: null,
+        nota_abdominal: null,
+        nota_corrida: null,
+        nota_barra: null,
+        nota_final: null,
         mencao: mencao === "—" ? null : mencao,
         observacoes,
       });
@@ -265,6 +257,7 @@ function RegistrosPage() {
       const mc = extractMencoes(r.observacoes, r.mencao);
       return {
         Militar: m?.nome ?? "",
+        "Nome de guerra": m?.nome_guerra ?? "",
         Categoria: p?.label ?? "",
         TAF: r.taf_numero,
         Chamada: r.chamada,
@@ -353,6 +346,7 @@ function RegistrosPage() {
                                 onClick={() => {
                                   setNovoMilitar({
                                     nome: militarSearch.trim(),
+                                    nome_guerra: "",
                                     posto: "soldado",
                                     data_nascimento: "",
                                   });
@@ -455,66 +449,42 @@ function RegistrosPage() {
                   <ExField
                     label="Flexão"
                     exVal={form.flexao}
-                    notaVal={form.nota_flexao}
                     onEx={(v) => setForm({ ...form, flexao: v })}
-                    onNota={(v) => setForm({ ...form, nota_flexao: v })}
                     unit="rep."
                   />
                   <ExField
                     label="Abdominal"
                     exVal={form.abdominal}
-                    notaVal={form.nota_abdominal}
                     onEx={(v) => setForm({ ...form, abdominal: v })}
-                    onNota={(v) => setForm({ ...form, nota_abdominal: v })}
                     unit="rep."
                   />
                   <ExField
                     label="Corrida"
                     exVal={form.corrida_metros}
-                    notaVal={form.nota_corrida}
                     onEx={(v) => setForm({ ...form, corrida_metros: v })}
-                    onNota={(v) => setForm({ ...form, nota_corrida: v })}
                     unit="m"
                   />
                   <ExField
                     label="Barra"
                     exVal={form.barra}
-                    notaVal={form.nota_barra}
                     onEx={(v) => setForm({ ...form, barra: v })}
-                    onNota={(v) => setForm({ ...form, nota_barra: v })}
                     unit="rep."
                   />
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>
-                    Nota final{" "}
-                    <span className="text-xs text-muted-foreground">
-                      (média automática: {autoMedia != null ? autoMedia.toFixed(2) : "—"})
-                    </span>
-                  </Label>
-                  <Input
-                    inputMode="decimal"
-                    placeholder={autoMedia != null ? autoMedia.toFixed(2) : "0,00"}
-                    value={form.nota_final ?? ""}
-                    onChange={(e) => setForm({ ...form, nota_final: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Menção{" "}
-                    <span className="text-xs text-muted-foreground">
-                      (auto por idade: {mencaoFinalAuto ?? "—"})
-                    </span>
-                  </Label>
-                  <Input
-                    placeholder={mencaoFinalAuto ?? mencaoParaNota(autoMedia)}
-                    value={form.mencao ?? ""}
-                    onChange={(e) => setForm({ ...form, mencao: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>
+                  Menção final{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (auto por idade: {mencaoFinalAuto ?? "—"})
+                  </span>
+                </Label>
+                <Input
+                  placeholder={mencaoFinalAuto ?? "—"}
+                  value={form.mencao ?? ""}
+                  onChange={(e) => setForm({ ...form, mencao: e.target.value })}
+                />
               </div>
 
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs">
@@ -559,11 +529,19 @@ function RegistrosPage() {
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="space-y-2">
-                <Label>Nome</Label>
+                <Label>Nome completo</Label>
                 <Input
                   value={novoMilitar.nome}
                   onChange={(e) => setNovoMilitar({ ...novoMilitar, nome: e.target.value })}
                   placeholder="Nome completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome de guerra</Label>
+                <Input
+                  value={novoMilitar.nome_guerra}
+                  onChange={(e) => setNovoMilitar({ ...novoMilitar, nome_guerra: e.target.value })}
+                  placeholder="Ex.: SILVA"
                 />
               </div>
               <div className="space-y-2">
@@ -608,6 +586,7 @@ function RegistrosPage() {
                   try {
                     const created: any = await saveMilitar.mutateAsync({
                       nome: novoMilitar.nome.trim(),
+                      nome_guerra: novoMilitar.nome_guerra.trim() || null,
                       posto: novoMilitar.posto,
                       data_nascimento: novoMilitar.data_nascimento || null,
                     });
@@ -708,7 +687,7 @@ function RegistrosPage() {
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
                 <th className="px-3 py-2">Militar</th>
-                <th className="px-3 py-2">Categoria</th>
+                <th className="px-3 py-2">Nome de guerra</th>
                 <th className="px-2 py-2 text-center">TAF</th>
                 <th className="px-2 py-2 text-center">Chamada</th>
                 <th className="px-2 py-2 text-center" title="Corrida">COR</th>
@@ -736,7 +715,6 @@ function RegistrosPage() {
               )}
               {filtrados.map((r) => {
                 const m = militarById.get(r.militar_id);
-                const p = POSTOS.find((x) => x.value === m?.posto);
                 const mc = extractMencoes(r.observacoes, r.mencao);
                 const cell = (v: string, raw?: number | null, suffix = "") => (
                   <div className="flex flex-col items-center gap-0.5">
@@ -754,7 +732,7 @@ function RegistrosPage() {
                   <tr key={r.id} className="border-b border-border/50 hover:bg-muted/40">
                     <td className="px-3 py-2 font-medium">{m?.nome ?? "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground">
-                      {m?.identificacao ?? p?.label ?? "—"}
+                      {m?.nome_guerra ?? "—"}
                     </td>
                     <td className="px-2 py-2 text-center">{r.taf_numero}º</td>
                     <td className="px-2 py-2 text-center">{r.chamada}ª</td>
@@ -818,16 +796,12 @@ function RegistrosPage() {
 function ExField({
   label,
   exVal,
-  notaVal,
   onEx,
-  onNota,
   unit,
 }: {
   label: string;
   exVal?: string;
-  notaVal?: string;
   onEx: (v: string) => void;
-  onNota: (v: string) => void;
   unit: string;
 }) {
   return (
@@ -842,17 +816,6 @@ function ExField({
           inputMode="numeric"
           value={exVal ?? ""}
           onChange={(e) => onEx(e.target.value)}
-        />
-      </div>
-      <div>
-        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Nota (0–10)
-        </Label>
-        <Input
-          className="h-8"
-          inputMode="decimal"
-          value={notaVal ?? ""}
-          onChange={(e) => onNota(e.target.value)}
         />
       </div>
     </div>

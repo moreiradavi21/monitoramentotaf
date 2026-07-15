@@ -5,6 +5,7 @@ import type { Posto } from "./taf";
 export type Militar = {
   id: string;
   nome: string;
+  nome_guerra: string | null;
   posto: Posto;
   identificacao: string | null;
   data_nascimento: string | null;
@@ -67,12 +68,14 @@ export function useSaveMilitar() {
     mutationFn: async (m: {
       id?: string;
       nome: string;
+      nome_guerra?: string | null;
       posto: Posto;
       identificacao?: string | null;
       data_nascimento?: string | null;
     }) => {
       const payload = {
         nome: m.nome,
+        nome_guerra: m.nome_guerra ?? null,
         posto: m.posto,
         identificacao: m.identificacao ?? null,
         data_nascimento: m.data_nascimento ?? null,
