@@ -111,6 +111,12 @@ function Dashboard() {
               <Link to="/militares">Gerenciar militares</Link>
             </Button>
           )}
+          {isAdmin && (
+            <Button asChild variant="outline">
+              <Link to="/importar">Importar planilha</Link>
+            </Button>
+          )}
+
           {isAvaliador && (
             <Button asChild>
               <Link to="/registros">Registrar TAF</Link>
