@@ -97,6 +97,7 @@ function MilitaresPage() {
         nome: nome.trim(),
         posto,
         identificacao: ident.trim() || null,
+        data_nascimento: dataNasc || null,
       });
       toast.success(editing ? "Militar atualizado." : "Militar cadastrado.");
       setOpen(false);
