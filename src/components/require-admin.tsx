@@ -4,46 +4,44 @@ import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 
+function Loading({ label }: { label: string }) {
+  return (
+    <Card>
+      <CardContent className="py-10 text-center text-muted-foreground">
+        {label}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Denied({ msg }: { msg: string }) {
+  return (
+    <Card>
+      <CardContent className="py-10 text-center">
+        <h2 className="font-display text-xl text-primary">Acesso restrito</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{msg}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function RequireAdmin({ children }: { children: ReactNode }) {
-  const { user, isAdmin, loading, role } = useAuth();
+  const { user, isAdmin, loading, role, approved } = useAuth();
+  if (loading) return <Loading label="Verificando acesso..." />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (role == null) return <Loading label="Carregando permissões..." />;
+  if (!approved) return <Denied msg="Sua conta ainda não foi aprovada." />;
+  if (!isAdmin) return <Denied msg="Somente administradores podem acessar esta área." />;
+  return <>{children}</>;
+}
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">
-          Verificando acesso...
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Session loaded but role not resolved yet
-  if (role == null) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">
-          Carregando permissões...
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center">
-          <h2 className="font-display text-xl text-primary">Acesso restrito</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Somente administradores podem acessar esta área.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+export function RequireAvaliador({ children }: { children: ReactNode }) {
+  const { user, isAvaliador, loading, role, approved } = useAuth();
+  if (loading) return <Loading label="Verificando acesso..." />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (role == null) return <Loading label="Carregando permissões..." />;
+  if (!approved) return <Denied msg="Sua conta ainda não foi aprovada." />;
+  if (!isAvaliador)
+    return <Denied msg="Somente avaliadores ou administradores podem lançar TAF." />;
   return <>{children}</>;
 }
