@@ -1,9 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +61,7 @@ import {
   useDeleteResultado,
   useMilitares,
   useResultados,
+  useSaveMilitar,
   useSaveResultado,
   type TafResultado,
 } from "@/lib/data";
@@ -97,6 +108,16 @@ function RegistrosPage() {
   const { isAdmin } = useAuth();
   const save = useSaveResultado();
   const del = useDeleteResultado();
+  const saveMilitar = useSaveMilitar();
+
+  const [militarPickerOpen, setMilitarPickerOpen] = useState(false);
+  const [militarSearch, setMilitarSearch] = useState("");
+  const [novoMilitarOpen, setNovoMilitarOpen] = useState(false);
+  const [novoMilitar, setNovoMilitar] = useState<{ nome: string; posto: Posto; data_nascimento: string }>({
+    nome: "",
+    posto: "soldado",
+    data_nascimento: "",
+  });
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Form>(emptyForm());
@@ -298,32 +319,82 @@ function RegistrosPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Militar</Label>
-                  <Select
-                    value={form.militar_id}
-                    onValueChange={(v) => setForm({ ...form, militar_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {POSTOS.map((p) => {
-                        const list = militares.filter((m) => m.posto === p.value);
-                        if (!list.length) return null;
-                        return (
-                          <div key={p.value}>
-                            <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                              {p.plural}
+                  <Popover open={militarPickerOpen} onOpenChange={setMilitarPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {militarSel ? militarSel.nome : "Buscar militar..."}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command
+                        filter={(value, search) =>
+                          value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                        }
+                      >
+                        <CommandInput
+                          placeholder="Digite o nome..."
+                          value={militarSearch}
+                          onValueChange={setMilitarSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            <div className="space-y-2 py-2 text-center text-sm">
+                              <p className="text-muted-foreground">Nenhum militar encontrado.</p>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  setNovoMilitar({
+                                    nome: militarSearch.trim(),
+                                    posto: "soldado",
+                                    data_nascimento: "",
+                                  });
+                                  setMilitarPickerOpen(false);
+                                  setNovoMilitarOpen(true);
+                                }}
+                              >
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Cadastrar "{militarSearch.trim() || "novo militar"}"
+                              </Button>
                             </div>
-                            {list.map((m) => (
-                              <SelectItem key={m.id} value={m.id}>
-                                {m.nome}
-                              </SelectItem>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                          </CommandEmpty>
+                          {POSTOS.map((p) => {
+                            const list = militares.filter((m) => m.posto === p.value);
+                            if (!list.length) return null;
+                            return (
+                              <CommandGroup key={p.value} heading={p.plural}>
+                                {list.map((m) => (
+                                  <CommandItem
+                                    key={m.id}
+                                    value={m.nome}
+                                    onSelect={() => {
+                                      setForm({ ...form, militar_id: m.id });
+                                      setMilitarPickerOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        form.militar_id === m.id ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {m.nome}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            );
+                          })}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label>Data de aplicação</Label>
@@ -478,6 +549,87 @@ function RegistrosPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={novoMilitarOpen} onOpenChange={setNovoMilitarOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-display tracking-wide">
+                Cadastrar novo militar
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input
+                  value={novoMilitar.nome}
+                  onChange={(e) => setNovoMilitar({ ...novoMilitar, nome: e.target.value })}
+                  placeholder="Nome completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Posto / Graduação</Label>
+                <Select
+                  value={novoMilitar.posto}
+                  onValueChange={(v) => setNovoMilitar({ ...novoMilitar, posto: v as Posto })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {POSTOS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Data de nascimento</Label>
+                <Input
+                  type="date"
+                  value={novoMilitar.data_nascimento}
+                  onChange={(e) =>
+                    setNovoMilitar({ ...novoMilitar, data_nascimento: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNovoMilitarOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!novoMilitar.nome.trim()) {
+                    toast.error("Informe o nome.");
+                    return;
+                  }
+                  try {
+                    const created: any = await saveMilitar.mutateAsync({
+                      nome: novoMilitar.nome.trim(),
+                      posto: novoMilitar.posto,
+                      data_nascimento: novoMilitar.data_nascimento || null,
+                    });
+                    toast.success("Militar cadastrado.");
+                    setNovoMilitarOpen(false);
+                    setMilitarSearch("");
+                    // Tenta vincular imediatamente pelo id retornado; senão, pelo nome
+                    if (created?.id) {
+                      setForm((f) => ({ ...f, militar_id: created.id }));
+                    }
+                  } catch (e: any) {
+                    toast.error(e?.message ?? "Erro ao cadastrar militar.");
+                  }
+                }}
+                disabled={saveMilitar.isPending}
+              >
+                {saveMilitar.isPending ? "Salvando..." : "Cadastrar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {isAdmin && (
           <Button variant="outline" onClick={exportarPlanilha} disabled={filtrados.length === 0}>
             <Download className="mr-2 h-4 w-4" />
