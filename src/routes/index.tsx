@@ -59,6 +59,29 @@ function Dashboard() {
     });
   }, [militares, resultsForEdicao]);
 
+  const MENCAO_SCORE_LOCAL: Record<string, number> = {
+    E: 5, EXCELENTE: 5, MB: 4, "MUITO BOM": 4, B: 3, BOM: 3,
+    R: 2, REGULAR: 2, SUF: 2, I: 1, INSUF: 1, INSUFICIENTE: 1,
+  };
+
+  const topDestaques = useMemo(() => {
+    const alvos: Posto[] = ["cabo", "soldado", "recruta"];
+    return alvos.map((p) => {
+      const items = resultsForEdicao
+        .map((r) => {
+          const m = militares.find((x) => x.id === r.militar_id);
+          if (!m || m.posto !== p) return null;
+          const key = (r.mencao ?? "").trim().toUpperCase();
+          const score = MENCAO_SCORE_LOCAL[key] ?? 0;
+          return { militar: m, resultado: r, score };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null && x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+      return { posto: p, label: POSTOS.find((x) => x.value === p)?.plural ?? p, items };
+    });
+  }, [resultsForEdicao, militares]);
+
   const totalMilitares = militares.length;
   const totalRealizados = resultsForEdicao.length;
   const totalInsuf = resultsForEdicao.filter((r) => isInsuf(r.mencao)).length;
@@ -66,6 +89,7 @@ function Dashboard() {
     () => mencaoMedia(resultsForEdicao.map((r) => r.mencao)),
     [resultsForEdicao],
   );
+
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
