@@ -164,9 +164,19 @@ function MilitaresPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label>Nome de guerra / Nome completo</Label>
-                <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Nome completo</Label>
+                  <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome de guerra</Label>
+                  <Input
+                    value={nomeGuerra}
+                    onChange={(e) => setNomeGuerra(e.target.value)}
+                    placeholder="Ex.: SILVA"
+                  />
+                </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
