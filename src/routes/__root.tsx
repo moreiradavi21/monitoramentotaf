@@ -145,8 +145,6 @@ function RootComponent() {
 }
 
 function AppGate({ children }: { children: ReactNode }) {
-  const { useAuth } = require("@/lib/auth") as typeof import("@/lib/auth");
-  const { useRouterState, Navigate } = require("@tanstack/react-router") as typeof import("@tanstack/react-router");
   const auth = useAuth();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isAuthPage = pathname === "/auth";
