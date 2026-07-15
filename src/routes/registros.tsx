@@ -561,11 +561,19 @@ function RegistrosPage() {
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="space-y-2">
-                <Label>Nome</Label>
+                <Label>Nome completo</Label>
                 <Input
                   value={novoMilitar.nome}
                   onChange={(e) => setNovoMilitar({ ...novoMilitar, nome: e.target.value })}
                   placeholder="Nome completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome de guerra</Label>
+                <Input
+                  value={novoMilitar.nome_guerra}
+                  onChange={(e) => setNovoMilitar({ ...novoMilitar, nome_guerra: e.target.value })}
+                  placeholder="Ex.: SILVA"
                 />
               </div>
               <div className="space-y-2">
