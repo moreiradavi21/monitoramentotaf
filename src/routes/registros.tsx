@@ -100,7 +100,7 @@ function RegistrosPage() {
   const del = useDeleteResultado();
   const saveMilitar = useSaveMilitar();
 
-  const [militarPickerOpen, setMilitarPickerOpen] = useState(false);
+  
   const [militarSearch, setMilitarSearch] = useState("");
   const [novoMilitarOpen, setNovoMilitarOpen] = useState(false);
   const [novoMilitar, setNovoMilitar] = useState<{ nome: string; nome_guerra: string; posto: Posto; data_nascimento: string }>({
