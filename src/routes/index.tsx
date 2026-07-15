@@ -81,12 +81,21 @@ function Dashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/militares">Gerenciar militares</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/registros">Registrar TAF</Link>
-          </Button>
+          {isAdmin && (
+            <Button asChild variant="outline">
+              <Link to="/militares">Gerenciar militares</Link>
+            </Button>
+          )}
+          {isAvaliador && (
+            <Button asChild>
+              <Link to="/registros">Registrar TAF</Link>
+            </Button>
+          )}
+          {isCompanhia && (
+            <Button asChild>
+              <Link to="/meus-resultados">Meus resultados</Link>
+            </Button>
+          )}
         </div>
       </div>
 
