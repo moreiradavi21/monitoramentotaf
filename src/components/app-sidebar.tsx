@@ -5,7 +5,11 @@ import {
   ClipboardList,
   ShieldCheck,
   UserCheck,
+  Upload,
 } from "lucide-react";
+
+
+
 
 import {
   Sidebar,
@@ -39,7 +43,9 @@ export function AppSidebar() {
     { title: "Painel TAF", url: "/", icon: LayoutDashboard },
     { title: "Militares", url: "/militares", icon: Users },
     { title: "Registros", url: "/registros", icon: ClipboardList },
+    { title: "Importar", url: "/importar", icon: Upload },
     { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
+
   ];
 
   return (

@@ -25,7 +25,9 @@ import {
   Users,
   UserCheck,
   ShieldCheck,
+  Upload,
 } from "lucide-react";
+
 
 function NotFoundComponent() {
   return (
@@ -205,7 +207,9 @@ function BottomNav() {
     items.push({ url: "/", icon: LayoutDashboard, label: "Painel" });
     items.push({ url: "/militares", icon: Users, label: "Militares" });
     items.push({ url: "/registros", icon: ClipboardList, label: "Registros" });
+    items.push({ url: "/importar", icon: Upload, label: "Importar" });
     items.push({ url: "/aprovacoes", icon: UserCheck, label: "Aprovações" });
+
   } else if (role === "avaliador") {
     items.push({ url: "/registros", icon: ClipboardList, label: "Registros" });
   } else if (isCompanhia) {
