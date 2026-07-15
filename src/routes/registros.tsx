@@ -108,6 +108,16 @@ function RegistrosPage() {
   const { isAdmin } = useAuth();
   const save = useSaveResultado();
   const del = useDeleteResultado();
+  const saveMilitar = useSaveMilitar();
+
+  const [militarPickerOpen, setMilitarPickerOpen] = useState(false);
+  const [militarSearch, setMilitarSearch] = useState("");
+  const [novoMilitarOpen, setNovoMilitarOpen] = useState(false);
+  const [novoMilitar, setNovoMilitar] = useState<{ nome: string; posto: Posto; data_nascimento: string }>({
+    nome: "",
+    posto: "soldado",
+    data_nascimento: "",
+  });
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Form>(emptyForm());
