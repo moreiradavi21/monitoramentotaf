@@ -399,12 +399,30 @@ function RegistrosPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Menção</Label>
+                  <Label>
+                    Menção{" "}
+                    <span className="text-xs text-muted-foreground">
+                      (auto por idade: {mencaoFinalAuto ?? "—"})
+                    </span>
+                  </Label>
                   <Input
-                    placeholder={mencaoParaNota(autoMedia)}
+                    placeholder={mencaoFinalAuto ?? mencaoParaNota(autoMedia)}
                     value={form.mencao ?? ""}
                     onChange={(e) => setForm({ ...form, mencao: e.target.value })}
                   />
+                </div>
+              </div>
+
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-3 text-xs">
+                <p className="mb-1 uppercase tracking-widest text-muted-foreground">
+                  Menções automáticas por idade
+                  {idade != null ? ` — ${idade} anos` : militarSel && !militarSel.data_nascimento ? " — cadastre a data de nascimento do militar" : ""}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <span>COR: <b>{mencoesAuto.COR ?? "—"}</b></span>
+                  <span>FLEX: <b>{mencoesAuto.FLEX ?? "—"}</b></span>
+                  <span>ABD: <b>{mencoesAuto.ABD ?? "—"}</b></span>
+                  <span>BAR: <b>{mencoesAuto.BAR ?? "—"}</b></span>
                 </div>
               </div>
 
