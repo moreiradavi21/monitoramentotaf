@@ -354,6 +354,7 @@ function RegistrosPage() {
                                 onClick={() => {
                                   setNovoMilitar({
                                     nome: militarSearch.trim(),
+                                    nome_guerra: "",
                                     posto: "soldado",
                                     data_nascimento: "",
                                   });
