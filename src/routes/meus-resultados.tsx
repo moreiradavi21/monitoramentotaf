@@ -89,7 +89,12 @@ function MeusResultadosPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {meus.map((r) => {
             const mc = extractMencoes(r.observacoes, r.mencao);
-            const cell = (label: string, v: string) => (
+            const cell = (
+              label: string,
+              v: string,
+              raw?: number | null,
+              suffix = "",
+            ) => (
               <div className="flex flex-col items-center gap-1">
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   {label}
@@ -98,6 +103,9 @@ function MeusResultadosPage() {
                   className={`inline-block min-w-[2.5rem] rounded border px-2 py-0.5 text-xs font-medium ${mencaoColor(v)}`}
                 >
                   {v}
+                </span>
+                <span className="text-[10px] tabular-nums text-muted-foreground">
+                  {raw == null ? "—" : `${raw}${suffix}`}
                 </span>
               </div>
             );
@@ -128,10 +136,10 @@ function MeusResultadosPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-5 gap-2 rounded-md border border-border bg-muted/30 p-3">
-                    {cell("COR", mc.COR)}
-                    {cell("FLEX", mc.FLEX)}
-                    {cell("ABD", mc.ABD)}
-                    {cell("BAR", mc.BAR)}
+                    {cell("COR", mc.COR, r.corrida_metros, "m")}
+                    {cell("FLEX", mc.FLEX, r.flexao)}
+                    {cell("ABD", mc.ABD, r.abdominal)}
+                    {cell("BAR", mc.BAR, r.barra)}
                     {cell("FIN", mc.FIN)}
                   </div>
 

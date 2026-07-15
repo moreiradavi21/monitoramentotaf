@@ -254,12 +254,7 @@ function AuthPage() {
                               setMilitarId("");
                             }}
                           />
-                          <div>
-                            <div className="font-medium text-primary">{r.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {r.desc}
-                            </div>
-                          </div>
+                          <div className="font-medium text-primary">{r.label}</div>
                         </div>
                       </label>
                     ))}
@@ -354,9 +349,7 @@ function AuthPage() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Mínimo 6 caracteres. Contas de Avaliador e Administrador
-                    dependem de aprovação do administrador para acessar o
-                    sistema.
+                    Mínimo 6 caracteres.
                   </p>
                 </div>
                 <Button className="w-full" type="submit" disabled={loading}>
