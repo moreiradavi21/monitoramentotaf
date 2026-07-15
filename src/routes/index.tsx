@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Users, Activity, TrendingUp, AlertTriangle } from "lucide-react";
+import { Users, Activity, TrendingUp, AlertTriangle, Trophy } from "lucide-react";
+
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
