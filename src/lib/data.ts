@@ -5,6 +5,7 @@ import type { Posto } from "./taf";
 export type Militar = {
   id: string;
   nome: string;
+  nome_guerra: string | null;
   posto: Posto;
   identificacao: string | null;
   data_nascimento: string | null;
