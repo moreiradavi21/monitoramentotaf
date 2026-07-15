@@ -148,10 +148,7 @@ export function useSaveResultado() {
         observacoes: r.observacoes ?? null,
       };
 
-      // Só inclui avaliador_id na criação (não sobrescreve em edições)
-      if (!r.id && r.avaliador_id !== undefined) {
-        payload.avaliador_id = r.avaliador_id ?? null;
-      }
+      // avaliador_id não é persistido (coluna inexistente no schema atual)
 
       if (r.id) {
         const { error } = await supabase
