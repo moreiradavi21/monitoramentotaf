@@ -687,7 +687,7 @@ function RegistrosPage() {
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
                 <th className="px-3 py-2">Militar</th>
-                <th className="px-3 py-2">Categoria</th>
+                <th className="px-3 py-2">Nome de guerra</th>
                 <th className="px-2 py-2 text-center">TAF</th>
                 <th className="px-2 py-2 text-center">Chamada</th>
                 <th className="px-2 py-2 text-center" title="Corrida">COR</th>
