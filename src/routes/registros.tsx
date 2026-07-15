@@ -257,6 +257,7 @@ function RegistrosPage() {
       const mc = extractMencoes(r.observacoes, r.mencao);
       return {
         Militar: m?.nome ?? "",
+        "Nome de guerra": m?.nome_guerra ?? "",
         Categoria: p?.label ?? "",
         TAF: r.taf_numero,
         Chamada: r.chamada,
