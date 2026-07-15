@@ -7,6 +7,7 @@ import {
   Navigate,
   HeadContent,
   Scripts,
+  Link,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -17,6 +18,14 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { HeaderUser } from "@/components/header-user";
+import {
+  LayoutDashboard,
+  ClipboardList,
+  BadgeCheck,
+  Users,
+  UserCheck,
+  ShieldCheck,
+} from "lucide-react";
 
 function NotFoundComponent() {
   return (
@@ -69,14 +78,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "CCAP · Controle de TAF" },
       {
         property: "og:description",
-        content: "Sistema de controle do Teste de Aptidão Física (TAF) da Companhia CCAP — 1º, 2º e 3º TAF em 1ª e 2ª chamada, por posto e graduação.",
+        content:
+          "Sistema de controle do Teste de Aptidão Física (TAF) da Companhia CCAP — 1º, 2º e 3º TAF em 1ª e 2ª chamada, por posto e graduação.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "CCAP · Controle de TAF" },
-      { name: "twitter:description", content: "Sistema de controle do Teste de Aptidão Física (TAF) da Companhia CCAP — 1º, 2º e 3º TAF em 1ª e 2ª chamada, por posto e graduação." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c56d6f8f-b5dc-40e1-8a3d-87eb503d74fe/id-preview-dcf72ee1--41365671-7322-4e2e-8d52-92d84a1c5ebe.lovable.app-1784042883863.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c56d6f8f-b5dc-40e1-8a3d-87eb503d74fe/id-preview-dcf72ee1--41365671-7322-4e2e-8d52-92d84a1c5ebe.lovable.app-1784042883863.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Sistema de controle do Teste de Aptidão Física (TAF) da Companhia CCAP — 1º, 2º e 3º TAF em 1ª e 2ª chamada, por posto e graduação.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c56d6f8f-b5dc-40e1-8a3d-87eb503d74fe/id-preview-dcf72ee1--41365671-7322-4e2e-8d52-92d84a1c5ebe.lovable.app-1784042883863.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c56d6f8f-b5dc-40e1-8a3d-87eb503d74fe/id-preview-dcf72ee1--41365671-7322-4e2e-8d52-92d84a1c5ebe.lovable.app-1784042883863.png",
+      },
       { name: "theme-color", content: "#1f3a2e" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "CCAP TAF" },
@@ -120,11 +142,16 @@ function RootComponent() {
       <AuthProvider>
         <SidebarProvider>
           <div className="flex min-h-screen w-full">
+            {/* Sidebar only renders for admin on lg+ screens (see app-sidebar.tsx) */}
             <AppSidebar />
-            <div className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col min-w-0">
               <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
-                <SidebarTrigger />
+                <AdminSidebarTrigger />
                 <div className="flex items-center gap-2">
+                  {/* Logo icon visible on mobile where sidebar is hidden */}
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-gold text-gold-foreground lg:hidden">
+                    <ShieldCheck className="h-4 w-4" />
+                  </div>
                   <span className="font-display text-lg tracking-wider text-primary">
                     Companhia CCAP
                   </span>
@@ -136,17 +163,74 @@ function RootComponent() {
                   <HeaderUser />
                 </div>
               </header>
-              <main className="flex-1 p-4 md:p-6">
+
+              {/* pb-24 on mobile to clear the fixed bottom nav */}
+              <main className="flex-1 p-4 pb-24 lg:p-6 lg:pb-6">
                 <AppGate>
                   <Outlet />
                 </AppGate>
               </main>
+
+              {/* Fixed bottom navigation for mobile */}
+              <BottomNav />
             </div>
           </div>
           <Toaster richColors position="top-right" />
         </SidebarProvider>
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+/** Sidebar trigger only shown to admin (who has the sidebar) */
+function AdminSidebarTrigger() {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return null;
+  return <SidebarTrigger />;
+}
+
+/** Fixed bottom nav bar for mobile — hidden on lg+ where sidebar takes over */
+function BottomNav() {
+  const { isAdmin, isCompanhia, approved, user, role } = useAuth();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+
+  if (!user || !approved) return null;
+
+  const isActive = (p: string) => (p === "/" ? pathname === "/" : pathname.startsWith(p));
+
+  type NavItem = { url: string; icon: React.ComponentType<{ className?: string }>; label: string };
+  const items: NavItem[] = [];
+
+  if (isAdmin) {
+    items.push({ url: "/", icon: LayoutDashboard, label: "Painel" });
+    items.push({ url: "/militares", icon: Users, label: "Militares" });
+    items.push({ url: "/registros", icon: ClipboardList, label: "Registros" });
+    items.push({ url: "/aprovacoes", icon: UserCheck, label: "Aprovações" });
+  } else if (role === "avaliador") {
+    items.push({ url: "/registros", icon: ClipboardList, label: "Registros" });
+  } else if (isCompanhia) {
+    items.push({ url: "/meus-resultados", icon: BadgeCheck, label: "Meus TAFs" });
+  }
+
+  if (!items.length) return null;
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-30 flex border-t border-border bg-background/95 backdrop-blur-sm lg:hidden">
+      {items.map((item) => (
+        <Link
+          key={item.url}
+          to={item.url}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] uppercase tracking-widest transition-colors ${
+            isActive(item.url) ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <item.icon
+            className={`h-5 w-5 ${isActive(item.url) ? "text-primary" : "text-muted-foreground"}`}
+          />
+          <span>{item.label}</span>
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -157,19 +241,28 @@ function AppGate({ children }: { children: ReactNode }) {
 
   if (auth.loading) {
     return (
-      <div className="py-16 text-center text-sm text-muted-foreground">
-        Carregando...
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="space-y-3 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
+
   if (!auth.user) {
     if (isAuthPage) return <>{children}</>;
     return <Navigate to="/auth" replace />;
   }
+
   if (isAuthPage) return <>{children}</>;
+
   if (!auth.approved) {
     return (
-      <div className="mx-auto max-w-lg py-16 text-center">
+      <div className="mx-auto max-w-lg py-16 text-center px-4">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <ShieldCheck className="h-8 w-8 text-primary" />
+        </div>
         <h1 className="font-display text-2xl text-primary">
           Conta pendente de aprovação
         </h1>
@@ -180,5 +273,15 @@ function AppGate({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  // Role-based redirect from home:
+  // - Companhia (role="user") → /meus-resultados
+  // - Avaliador puro (role="avaliador", not admin) → /registros
+  // - Admin → fica no / (dashboard)
+  if (pathname === "/") {
+    if (auth.isCompanhia) return <Navigate to="/meus-resultados" replace />;
+    if (auth.role === "avaliador") return <Navigate to="/registros" replace />;
+  }
+
   return <>{children}</>;
 }
