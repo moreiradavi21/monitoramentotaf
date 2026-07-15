@@ -25,6 +25,7 @@ function isInsuf(mencao: string | null | undefined): boolean {
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
+  const { isAdmin, isAvaliador, isCompanhia } = useAuth();
   const militaresQ = useMilitares();
   const resQ = useResultados();
 
