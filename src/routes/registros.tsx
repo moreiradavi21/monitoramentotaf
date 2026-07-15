@@ -733,7 +733,7 @@ function RegistrosPage() {
                   <tr key={r.id} className="border-b border-border/50 hover:bg-muted/40">
                     <td className="px-3 py-2 font-medium">{m?.nome ?? "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground">
-                      {m?.identificacao ?? p?.label ?? "—"}
+                      {m?.nome_guerra ?? "—"}
                     </td>
                     <td className="px-2 py-2 text-center">{r.taf_numero}º</td>
                     <td className="px-2 py-2 text-center">{r.chamada}ª</td>
