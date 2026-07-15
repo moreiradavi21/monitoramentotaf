@@ -52,13 +52,13 @@ import {
   type TafResultado,
 } from "@/lib/data";
 
-import { RequireAdmin } from "@/components/require-admin";
+import { RequireAvaliador } from "@/components/require-admin";
 
 export const Route = createFileRoute("/registros")({
   component: () => (
-    <RequireAdmin>
+    <RequireAvaliador>
       <RegistrosPage />
-    </RequireAdmin>
+    </RequireAvaliador>
   ),
 });
 

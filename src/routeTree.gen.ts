@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistrosRouteImport } from './routes/registros'
 import { Route as MilitaresRouteImport } from './routes/militares'
+import { Route as MeusResultadosRouteImport } from './routes/meus-resultados'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as IndexRouteImport } from './routes/index'
 
 const RegistrosRoute = RegistrosRouteImport.update({
@@ -24,9 +26,19 @@ const MilitaresRoute = MilitaresRouteImport.update({
   path: '/militares',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MeusResultadosRoute = MeusResultadosRouteImport.update({
+  id: '/meus-resultados',
+  path: '/meus-resultados',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AprovacoesRoute = AprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,34 +49,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aprovacoes': typeof AprovacoesRoute
   '/auth': typeof AuthRoute
+  '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aprovacoes': typeof AprovacoesRoute
   '/auth': typeof AuthRoute
+  '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aprovacoes': typeof AprovacoesRoute
   '/auth': typeof AuthRoute
+  '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/militares' | '/registros'
+  fullPaths:
+    | '/'
+    | '/aprovacoes'
+    | '/auth'
+    | '/meus-resultados'
+    | '/militares'
+    | '/registros'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/militares' | '/registros'
-  id: '__root__' | '/' | '/auth' | '/militares' | '/registros'
+  to:
+    | '/'
+    | '/aprovacoes'
+    | '/auth'
+    | '/meus-resultados'
+    | '/militares'
+    | '/registros'
+  id:
+    | '__root__'
+    | '/'
+    | '/aprovacoes'
+    | '/auth'
+    | '/meus-resultados'
+    | '/militares'
+    | '/registros'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AprovacoesRoute: typeof AprovacoesRoute
   AuthRoute: typeof AuthRoute
+  MeusResultadosRoute: typeof MeusResultadosRoute
   MilitaresRoute: typeof MilitaresRoute
   RegistrosRoute: typeof RegistrosRoute
 }
@@ -85,11 +124,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MilitaresRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/meus-resultados': {
+      id: '/meus-resultados'
+      path: '/meus-resultados'
+      fullPath: '/meus-resultados'
+      preLoaderRoute: typeof MeusResultadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aprovacoes': {
+      id: '/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/aprovacoes'
+      preLoaderRoute: typeof AprovacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,20 +157,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AprovacoesRoute: AprovacoesRoute,
   AuthRoute: AuthRoute,
+  MeusResultadosRoute: MeusResultadosRoute,
   MilitaresRoute: MilitaresRoute,
   RegistrosRoute: RegistrosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

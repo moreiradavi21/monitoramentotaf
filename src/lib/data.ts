@@ -27,6 +27,8 @@ export type TafResultado = {
   nota_final: number | null;
   mencao: string | null;
   observacoes: string | null;
+  ciente_at: string | null;
+  ciente_by: string | null;
   created_at: string;
 };
 

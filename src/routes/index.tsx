@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, type Posto } from "@/lib/taf";
 import { useMilitares, useResultados } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -24,6 +25,7 @@ function isInsuf(mencao: string | null | undefined): boolean {
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
+  const { isAdmin, isAvaliador, isCompanhia } = useAuth();
   const militaresQ = useMilitares();
   const resQ = useResultados();
 
@@ -79,12 +81,21 @@ function Dashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/militares">Gerenciar militares</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/registros">Registrar TAF</Link>
-          </Button>
+          {isAdmin && (
+            <Button asChild variant="outline">
+              <Link to="/militares">Gerenciar militares</Link>
+            </Button>
+          )}
+          {isAvaliador && (
+            <Button asChild>
+              <Link to="/registros">Registrar TAF</Link>
+            </Button>
+          )}
+          {isCompanhia && (
+            <Button asChild>
+              <Link to="/meus-resultados">Meus resultados</Link>
+            </Button>
+          )}
         </div>
       </div>
 
