@@ -309,13 +309,13 @@ function RegistrosPage() {
               Novo registro
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle className="font-display tracking-wide">
                 {form.id ? "Editar registro" : "Registrar TAF"}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-2">
+            <div className="grid gap-3 py-1">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Militar</Label>
@@ -332,7 +332,7 @@ function RegistrosPage() {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" side="bottom" sideOffset={4}>
                       <Command
                         filter={(value, search) =>
                           value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
@@ -343,7 +343,7 @@ function RegistrosPage() {
                           value={militarSearch}
                           onValueChange={setMilitarSearch}
                         />
-                        <CommandList>
+                        <CommandList className="max-h-52">
                           <CommandEmpty>
                             <div className="space-y-2 py-2 text-center text-sm">
                               <p className="text-muted-foreground">Nenhum militar encontrado.</p>
@@ -447,8 +447,8 @@ function RegistrosPage() {
                 </div>
               </div>
 
-              <div className="rounded-md border border-border bg-muted/30 p-3">
-                <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
+              <div className="rounded-md border border-border bg-muted/30 p-2">
+                <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
                   Exercícios
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -517,8 +517,8 @@ function RegistrosPage() {
                 </div>
               </div>
 
-              <div className="rounded-md border border-dashed border-border bg-muted/20 p-3 text-xs">
-                <p className="mb-1 uppercase tracking-widest text-muted-foreground">
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs">
+                <p className="uppercase tracking-widest text-muted-foreground">
                   Menções automáticas por idade
                   {idade != null ? ` — ${idade} anos` : militarSel && !militarSel.data_nascimento ? " — cadastre a data de nascimento do militar" : ""}
                 </p>
@@ -533,7 +533,7 @@ function RegistrosPage() {
               <div className="space-y-2">
                 <Label>Observações</Label>
                 <Textarea
-                  rows={2}
+                  rows={1}
                   value={form.observacoes ?? ""}
                   onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
                 />
