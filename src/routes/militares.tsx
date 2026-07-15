@@ -287,11 +287,9 @@ function MilitaresPage() {
                     >
                       <div>
                         <div className="font-medium">{m.nome}</div>
-                        {m.identificacao && (
-                          <div className="text-xs text-muted-foreground">
-                            {m.identificacao}
-                          </div>
-                        )}
+                        <div className="text-xs text-muted-foreground">
+                          {m.nome_guerra ? `NG: ${m.nome_guerra}` : m.identificacao ?? "—"}
+                        </div>
                       </div>
                       <div className="flex gap-1">
                         <Button
