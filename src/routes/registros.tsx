@@ -1,19 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Download, Check, ChevronsUpDown, UserPlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -109,7 +100,7 @@ function RegistrosPage() {
   const del = useDeleteResultado();
   const saveMilitar = useSaveMilitar();
 
-  const [militarPickerOpen, setMilitarPickerOpen] = useState(false);
+  
   const [militarSearch, setMilitarSearch] = useState("");
   const [novoMilitarOpen, setNovoMilitarOpen] = useState(false);
   const [novoMilitar, setNovoMilitar] = useState<{ nome: string; nome_guerra: string; posto: Posto; data_nascimento: string }>({
@@ -302,7 +293,7 @@ function RegistrosPage() {
               Novo registro
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+          <DialogContent className="max-w-lg w-[calc(100%-1rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6 top-2 translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
             <DialogHeader>
               <DialogTitle className="font-display tracking-wide">
                 {form.id ? "Editar registro" : "Registrar TAF"}
@@ -312,83 +303,97 @@ function RegistrosPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Militar</Label>
-                  <Popover open={militarPickerOpen} onOpenChange={setMilitarPickerOpen}>
-                    <PopoverTrigger asChild>
+                  {militarSel ? (
+                    <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span className="flex-1 truncate text-sm">{militarSel.nome}</span>
                       <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between font-normal"
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setForm({ ...form, militar_id: "" });
+                          setMilitarSearch("");
+                        }}
                       >
-                        <span className="truncate">
-                          {militarSel ? militarSel.nome : "Buscar militar..."}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        Trocar
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" side="bottom" sideOffset={4}>
-                      <Command
-                        filter={(value, search) =>
-                          value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
-                        }
-                      >
-                        <CommandInput
-                          placeholder="Digite o nome..."
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" />
+                        <Input
                           value={militarSearch}
-                          onValueChange={setMilitarSearch}
+                          onChange={(e) => setMilitarSearch(e.target.value)}
+                          placeholder="Buscar militar pelo nome..."
+                          className="pl-9"
+                          autoComplete="off"
                         />
-                        <CommandList className="max-h-52">
-                          <CommandEmpty>
-                            <div className="space-y-2 py-2 text-center text-sm">
-                              <p className="text-muted-foreground">Nenhum militar encontrado.</p>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  setNovoMilitar({
-                                    nome: militarSearch.trim(),
-                                    nome_guerra: "",
-                                    posto: "soldado",
-                                    data_nascimento: "",
-                                  });
-                                  setMilitarPickerOpen(false);
-                                  setNovoMilitarOpen(true);
-                                }}
-                              >
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Cadastrar "{militarSearch.trim() || "novo militar"}"
-                              </Button>
-                            </div>
-                          </CommandEmpty>
-                          {POSTOS.map((p) => {
-                            const list = militares.filter((m) => m.posto === p.value);
+                      </div>
+                      <div className="max-h-52 overflow-y-auto rounded-md border">
+                        {(() => {
+                          const q = militarSearch.trim().toLowerCase();
+                          const filtered = militares.filter((m) =>
+                            !q ||
+                            m.nome.toLowerCase().includes(q) ||
+                            (m.nome_guerra ?? "").toLowerCase().includes(q),
+                          );
+                          if (!filtered.length) {
+                            return (
+                              <div className="space-y-2 p-3 text-center text-sm">
+                                <p className="text-muted-foreground">Nenhum militar encontrado.</p>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => {
+                                    setNovoMilitar({
+                                      nome: militarSearch.trim(),
+                                      nome_guerra: "",
+                                      posto: "soldado",
+                                      data_nascimento: "",
+                                    });
+                                    setNovoMilitarOpen(true);
+                                  }}
+                                >
+                                  <UserPlus className="mr-2 h-4 w-4" />
+                                  Cadastrar "{militarSearch.trim() || "novo militar"}"
+                                </Button>
+                              </div>
+                            );
+                          }
+                          return POSTOS.map((p) => {
+                            const list = filtered.filter((m) => m.posto === p.value);
                             if (!list.length) return null;
                             return (
-                              <CommandGroup key={p.value} heading={p.plural}>
+                              <div key={p.value}>
+                                <div className="sticky top-0 bg-muted/60 px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+                                  {p.plural}
+                                </div>
                                 {list.map((m) => (
-                                  <CommandItem
+                                  <button
                                     key={m.id}
-                                    value={m.nome}
-                                    onSelect={() => {
+                                    type="button"
+                                    onClick={() => {
                                       setForm({ ...form, militar_id: m.id });
-                                      setMilitarPickerOpen(false);
+                                      setMilitarSearch("");
                                     }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
                                   >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        form.militar_id === m.id ? "opacity-100" : "opacity-0",
-                                      )}
-                                    />
-                                    {m.nome}
-                                  </CommandItem>
+                                    <span className="flex-1 truncate">{m.nome}</span>
+                                    {m.nome_guerra && (
+                                      <span className="text-xs text-muted-foreground">{m.nome_guerra}</span>
+                                    )}
+                                  </button>
                                 ))}
-                              </CommandGroup>
+                              </div>
                             );
-                          })}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                          });
+                        })()}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Data de aplicação</Label>
