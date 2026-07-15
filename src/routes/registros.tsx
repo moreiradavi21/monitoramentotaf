@@ -302,7 +302,7 @@ function RegistrosPage() {
               Novo registro
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+          <DialogContent className="max-w-lg w-[calc(100%-1rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6 top-2 translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
             <DialogHeader>
               <DialogTitle className="font-display tracking-wide">
                 {form.id ? "Editar registro" : "Registrar TAF"}
