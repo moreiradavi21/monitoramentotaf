@@ -31,6 +31,8 @@ export type TafResultado = {
   observacoes: string | null;
   ciente_at: string | null;
   ciente_by: string | null;
+  /** ID do avaliador que lançou o resultado (null em registros legados) */
+  avaliador_id: string | null;
   created_at: string;
 };
 
@@ -118,13 +120,17 @@ export function useDeleteMilitar() {
 export function useSaveResultado() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (r: Partial<TafResultado> & {
-      militar_id: string;
-      taf_numero: number;
-      chamada: number;
-      data_aplicacao: string;
-    }) => {
-      const payload = {
+    mutationFn: async (
+      r: Partial<TafResultado> & {
+        militar_id: string;
+        taf_numero: number;
+        chamada: number;
+        data_aplicacao: string;
+        /** ID do usuário avaliador; passe somente ao criar (undefined ao editar) */
+        avaliador_id?: string | null;
+      },
+    ) => {
+      const payload: Record<string, unknown> = {
         militar_id: r.militar_id,
         taf_numero: r.taf_numero,
         chamada: r.chamada,
@@ -141,6 +147,12 @@ export function useSaveResultado() {
         mencao: r.mencao ?? null,
         observacoes: r.observacoes ?? null,
       };
+
+      // Só inclui avaliador_id na criação (não sobrescreve em edições)
+      if (!r.id && r.avaliador_id !== undefined) {
+        payload.avaliador_id = r.avaliador_id ?? null;
+      }
+
       if (r.id) {
         const { error } = await supabase
           .from("taf_resultados")
