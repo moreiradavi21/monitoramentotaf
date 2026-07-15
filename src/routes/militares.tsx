@@ -187,6 +187,7 @@ function MilitaresPage() {
                     value={ident}
                     onChange={(e) => setIdent(e.target.value)}
                   />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Data de nascimento</Label>
