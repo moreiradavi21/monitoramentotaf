@@ -83,9 +83,15 @@ export function useSaveMilitar() {
           .update(payload)
           .eq("id", m.id);
         if (error) throw error;
+        return { id: m.id };
       } else {
-        const { error } = await supabase.from("militares").insert(payload);
+        const { data, error } = await supabase
+          .from("militares")
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        return data as { id: string };
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["militares"] }),
