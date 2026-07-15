@@ -821,16 +821,12 @@ function RegistrosPage() {
 function ExField({
   label,
   exVal,
-  notaVal,
   onEx,
-  onNota,
   unit,
 }: {
   label: string;
   exVal?: string;
-  notaVal?: string;
   onEx: (v: string) => void;
-  onNota: (v: string) => void;
   unit: string;
 }) {
   return (
@@ -845,17 +841,6 @@ function ExField({
           inputMode="numeric"
           value={exVal ?? ""}
           onChange={(e) => onEx(e.target.value)}
-        />
-      </div>
-      <div>
-        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Nota (0–10)
-        </Label>
-        <Input
-          className="h-8"
-          inputMode="decimal"
-          value={notaVal ?? ""}
-          onChange={(e) => onNota(e.target.value)}
         />
       </div>
     </div>
