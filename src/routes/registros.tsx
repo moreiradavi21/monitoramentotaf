@@ -51,7 +51,6 @@ import {
   POSTOS,
   TAF_NUMEROS,
   CHAMADAS,
-  mencaoParaNota,
   mencaoColor,
   extractMencoes,
   type Posto,
