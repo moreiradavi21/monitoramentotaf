@@ -618,6 +618,7 @@ function RegistrosPage() {
                   try {
                     const created: any = await saveMilitar.mutateAsync({
                       nome: novoMilitar.nome.trim(),
+                      nome_guerra: novoMilitar.nome_guerra.trim() || null,
                       posto: novoMilitar.posto,
                       data_nascimento: novoMilitar.data_nascimento || null,
                     });
