@@ -29,16 +29,21 @@ const POSTOS_MILITARES = [
   "3° SGT",
   "2° SGT",
   "1° SGT",
-  "S TEN",
-  "ASP",
-  "2° TEN",
-  "1° TEN",
-  "CAP",
+  "Sub Tenente",
+  "Aspirante",
+  "2° Tenente",
+  "1° Tenente",
+  "Capitão",
 ] as const;
 
 const POSTOS_AVAL_ADMIN = POSTOS_MILITARES.filter(
-  (p) => p === "AL" || p.includes("SGT") || p.includes("TEN"),
+  (p) =>
+    p === "AL" ||
+    p.includes("SGT") ||
+    p.includes("Tenente") ||
+    p === "Sub Tenente",
 );
+
 
 const REQUESTED_ROLES = [
   { value: "companhia", label: "Militar da Companhia", desc: "Visualiza os índices e dá ciente no próprio TAF." },
