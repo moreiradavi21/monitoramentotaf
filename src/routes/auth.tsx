@@ -254,12 +254,7 @@ function AuthPage() {
                               setMilitarId("");
                             }}
                           />
-                          <div>
-                            <div className="font-medium text-primary">{r.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {r.desc}
-                            </div>
-                          </div>
+                          <div className="font-medium text-primary">{r.label}</div>
                         </div>
                       </label>
                     ))}
