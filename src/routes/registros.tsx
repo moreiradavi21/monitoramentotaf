@@ -457,33 +457,25 @@ function RegistrosPage() {
                   <ExField
                     label="Flexão"
                     exVal={form.flexao}
-                    notaVal={form.nota_flexao}
                     onEx={(v) => setForm({ ...form, flexao: v })}
-                    onNota={(v) => setForm({ ...form, nota_flexao: v })}
                     unit="rep."
                   />
                   <ExField
                     label="Abdominal"
                     exVal={form.abdominal}
-                    notaVal={form.nota_abdominal}
                     onEx={(v) => setForm({ ...form, abdominal: v })}
-                    onNota={(v) => setForm({ ...form, nota_abdominal: v })}
                     unit="rep."
                   />
                   <ExField
                     label="Corrida"
                     exVal={form.corrida_metros}
-                    notaVal={form.nota_corrida}
                     onEx={(v) => setForm({ ...form, corrida_metros: v })}
-                    onNota={(v) => setForm({ ...form, nota_corrida: v })}
                     unit="m"
                   />
                   <ExField
                     label="Barra"
                     exVal={form.barra}
-                    notaVal={form.nota_barra}
                     onEx={(v) => setForm({ ...form, barra: v })}
-                    onNota={(v) => setForm({ ...form, nota_barra: v })}
                     unit="rep."
                   />
                 </div>
