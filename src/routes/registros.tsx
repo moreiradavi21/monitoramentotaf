@@ -113,8 +113,9 @@ function RegistrosPage() {
   const [militarPickerOpen, setMilitarPickerOpen] = useState(false);
   const [militarSearch, setMilitarSearch] = useState("");
   const [novoMilitarOpen, setNovoMilitarOpen] = useState(false);
-  const [novoMilitar, setNovoMilitar] = useState<{ nome: string; posto: Posto; data_nascimento: string }>({
+  const [novoMilitar, setNovoMilitar] = useState<{ nome: string; nome_guerra: string; posto: Posto; data_nascimento: string }>({
     nome: "",
+    nome_guerra: "",
     posto: "soldado",
     data_nascimento: "",
   });
