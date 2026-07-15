@@ -94,6 +94,7 @@ const emptyForm = (): Form => ({
 function RegistrosPage() {
   const { data: militares = [] } = useMilitares();
   const { data: resultados = [], isLoading } = useResultados();
+  const { isAdmin } = useAuth();
   const save = useSaveResultado();
   const del = useDeleteResultado();
 
