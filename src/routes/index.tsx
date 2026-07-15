@@ -261,6 +261,67 @@ function Dashboard() {
         )}
       </div>
 
+      {topDestaques.some((d) => d.items.length > 0) && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-gold" />
+              <CardTitle className="font-display text-lg tracking-wide text-primary">
+                Top 3 desempenhos físicos
+              </CardTitle>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Melhores menções entre Cabos, Soldados e Recrutas nesta edição.
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            {topDestaques.map((grp) => (
+              <div
+                key={grp.posto}
+                className="rounded-md border border-border bg-muted/30 p-3"
+              >
+                <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                  {grp.label}
+                </div>
+                {grp.items.length === 0 && (
+                  <p className="py-4 text-center text-xs text-muted-foreground">
+                    Sem registros nesta edição.
+                  </p>
+                )}
+                <ol className="space-y-2">
+                  {grp.items.map((it, idx) => {
+                    const medal =
+                      idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉";
+                    return (
+                      <li
+                        key={it.resultado.id}
+                        className="flex items-center gap-2 rounded-sm border border-border/60 bg-background p-2"
+                      >
+                        <span className="text-xl leading-none">{medal}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">
+                            {it.militar.nome_guerra ?? it.militar.nome}
+                          </div>
+                          <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+                            {it.militar.nome}
+                          </div>
+                        </div>
+                        <span
+                          className={`inline-block rounded border px-2 py-0.5 font-display text-sm ${mencaoColor(it.resultado.mencao)}`}
+                        >
+                          {it.resultado.mencao ?? "—"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+
       {resultsForEdicao.length > 0 && (
         <Card>
           <CardHeader>
