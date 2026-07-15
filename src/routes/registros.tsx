@@ -190,11 +190,10 @@ function RegistrosPage() {
       toast.error("Selecione o militar.");
       return;
     }
-    const finalNota = num(form.nota_final) ?? autoMedia;
     const mencao =
       form.mencao && form.mencao.trim().length
         ? form.mencao.trim()
-        : mencaoFinalAuto ?? mencaoParaNota(finalNota);
+        : mencaoFinalAuto ?? null;
     // Observações: mescla o texto do usuário com as menções calculadas por exercício
     const partes: string[] = [];
     (["FLEX", "ABD", "COR", "BAR"] as const).forEach((k) => {
@@ -216,11 +215,11 @@ function RegistrosPage() {
         abdominal: num(form.abdominal),
         corrida_metros: num(form.corrida_metros),
         barra: num(form.barra),
-        nota_flexao: num(form.nota_flexao),
-        nota_abdominal: num(form.nota_abdominal),
-        nota_corrida: num(form.nota_corrida),
-        nota_barra: num(form.nota_barra),
-        nota_final: finalNota,
+        nota_flexao: null,
+        nota_abdominal: null,
+        nota_corrida: null,
+        nota_barra: null,
+        nota_final: null,
         mencao: mencao === "—" ? null : mencao,
         observacoes,
       });
