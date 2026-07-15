@@ -187,7 +187,17 @@ function MilitaresPage() {
                     value={ident}
                     onChange={(e) => setIdent(e.target.value)}
                   />
-                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Data de nascimento</Label>
+                <Input
+                  type="date"
+                  value={dataNasc}
+                  onChange={(e) => setDataNasc(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Usada para calcular automaticamente a menção do TAF por idade.
+                </p>
               </div>
             </div>
             <DialogFooter>
