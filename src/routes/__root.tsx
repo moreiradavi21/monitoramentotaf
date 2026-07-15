@@ -129,7 +129,9 @@ function RootComponent() {
                 </div>
               </header>
               <main className="flex-1 p-4 md:p-6">
-                <Outlet />
+                <AppGate>
+                  <Outlet />
+                </AppGate>
               </main>
             </div>
           </div>
@@ -138,4 +140,39 @@ function RootComponent() {
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function AppGate({ children }: { children: ReactNode }) {
+  const { useAuth } = require("@/lib/auth") as typeof import("@/lib/auth");
+  const { useRouterState, Navigate } = require("@tanstack/react-router") as typeof import("@tanstack/react-router");
+  const auth = useAuth();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const isAuthPage = pathname === "/auth";
+
+  if (auth.loading) {
+    return (
+      <div className="py-16 text-center text-sm text-muted-foreground">
+        Carregando...
+      </div>
+    );
+  }
+  if (!auth.user) {
+    if (isAuthPage) return <>{children}</>;
+    return <Navigate to="/auth" replace />;
+  }
+  if (isAuthPage) return <>{children}</>;
+  if (!auth.approved) {
+    return (
+      <div className="mx-auto max-w-lg py-16 text-center">
+        <h1 className="font-display text-2xl text-primary">
+          Conta pendente de aprovação
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Sua conta foi criada com sucesso, mas ainda precisa da aprovação de um
+          administrador para acessar o sistema.
+        </p>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }
