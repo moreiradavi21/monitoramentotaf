@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Download, Check, ChevronsUpDown, UserPlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth";
