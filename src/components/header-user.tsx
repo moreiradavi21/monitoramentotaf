@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogIn, LogOut, ShieldCheck, User } from "lucide-react";
+import { LogIn, LogOut, ShieldCheck, User, ClipboardCheck, BadgeCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 
 export function HeaderUser() {
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, role, approved, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   if (loading) return null;
@@ -22,23 +22,39 @@ export function HeaderUser() {
     );
   }
 
+  const roleLabel = !approved
+    ? "Aguardando aprovação"
+    : role === "admin"
+      ? "Administrador"
+      : role === "avaliador"
+        ? "Avaliador"
+        : role === "user"
+          ? "Companhia"
+          : "Sem papel";
+
+  const Icon = role === "admin"
+    ? ShieldCheck
+    : role === "avaliador"
+      ? ClipboardCheck
+      : role === "user"
+        ? BadgeCheck
+        : User;
+
   return (
     <div className="flex items-center gap-2">
       <div className="hidden items-center gap-2 sm:flex">
         <Badge
           variant="outline"
           className={
-            isAdmin
+            role === "admin"
               ? "border-gold/40 bg-gold/10 text-gold-foreground"
-              : "border-border"
+              : approved
+                ? "border-primary/30 text-primary"
+                : "border-destructive/40 text-destructive"
           }
         >
-          {isAdmin ? (
-            <ShieldCheck className="mr-1 h-3 w-3" />
-          ) : (
-            <User className="mr-1 h-3 w-3" />
-          )}
-          {isAdmin ? "Admin" : "Usuário"}
+          <Icon className="mr-1 h-3 w-3" />
+          {roleLabel}
         </Badge>
         <span className="max-w-[180px] truncate text-xs text-muted-foreground">
           {user.email}
