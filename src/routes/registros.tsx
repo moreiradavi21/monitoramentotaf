@@ -319,32 +319,82 @@ function RegistrosPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Militar</Label>
-                  <Select
-                    value={form.militar_id}
-                    onValueChange={(v) => setForm({ ...form, militar_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {POSTOS.map((p) => {
-                        const list = militares.filter((m) => m.posto === p.value);
-                        if (!list.length) return null;
-                        return (
-                          <div key={p.value}>
-                            <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                              {p.plural}
+                  <Popover open={militarPickerOpen} onOpenChange={setMilitarPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {militarSel ? militarSel.nome : "Buscar militar..."}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command
+                        filter={(value, search) =>
+                          value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                        }
+                      >
+                        <CommandInput
+                          placeholder="Digite o nome..."
+                          value={militarSearch}
+                          onValueChange={setMilitarSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            <div className="space-y-2 py-2 text-center text-sm">
+                              <p className="text-muted-foreground">Nenhum militar encontrado.</p>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  setNovoMilitar({
+                                    nome: militarSearch.trim(),
+                                    posto: "soldado",
+                                    data_nascimento: "",
+                                  });
+                                  setMilitarPickerOpen(false);
+                                  setNovoMilitarOpen(true);
+                                }}
+                              >
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Cadastrar "{militarSearch.trim() || "novo militar"}"
+                              </Button>
                             </div>
-                            {list.map((m) => (
-                              <SelectItem key={m.id} value={m.id}>
-                                {m.nome}
-                              </SelectItem>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                          </CommandEmpty>
+                          {POSTOS.map((p) => {
+                            const list = militares.filter((m) => m.posto === p.value);
+                            if (!list.length) return null;
+                            return (
+                              <CommandGroup key={p.value} heading={p.plural}>
+                                {list.map((m) => (
+                                  <CommandItem
+                                    key={m.id}
+                                    value={m.nome}
+                                    onSelect={() => {
+                                      setForm({ ...form, militar_id: m.id });
+                                      setMilitarPickerOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        form.militar_id === m.id ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {m.nome}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            );
+                          })}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label>Data de aplicação</Label>
