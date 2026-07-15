@@ -481,34 +481,18 @@ function RegistrosPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>
-                    Nota final{" "}
-                    <span className="text-xs text-muted-foreground">
-                      (média automática: {autoMedia != null ? autoMedia.toFixed(2) : "—"})
-                    </span>
-                  </Label>
-                  <Input
-                    inputMode="decimal"
-                    placeholder={autoMedia != null ? autoMedia.toFixed(2) : "0,00"}
-                    value={form.nota_final ?? ""}
-                    onChange={(e) => setForm({ ...form, nota_final: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Menção{" "}
-                    <span className="text-xs text-muted-foreground">
-                      (auto por idade: {mencaoFinalAuto ?? "—"})
-                    </span>
-                  </Label>
-                  <Input
-                    placeholder={mencaoFinalAuto ?? mencaoParaNota(autoMedia)}
-                    value={form.mencao ?? ""}
-                    onChange={(e) => setForm({ ...form, mencao: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>
+                  Menção final{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (auto por idade: {mencaoFinalAuto ?? "—"})
+                  </span>
+                </Label>
+                <Input
+                  placeholder={mencaoFinalAuto ?? "—"}
+                  value={form.mencao ?? ""}
+                  onChange={(e) => setForm({ ...form, mencao: e.target.value })}
+                />
               </div>
 
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs">
