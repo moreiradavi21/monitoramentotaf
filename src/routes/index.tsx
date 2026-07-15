@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, type Posto } from "@/lib/taf";
 import { useMilitares, useResultados } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
