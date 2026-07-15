@@ -40,30 +40,52 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approved: boolean
           created_at: string
           id: string
+          militar_id: string | null
           nome: string | null
+          posto: string | null
+          requested_role: string | null
           updated_at: string
         }
         Insert: {
+          approved?: boolean
           created_at?: string
           id: string
+          militar_id?: string | null
           nome?: string | null
+          posto?: string | null
+          requested_role?: string | null
           updated_at?: string
         }
         Update: {
+          approved?: boolean
           created_at?: string
           id?: string
+          militar_id?: string | null
           nome?: string | null
+          posto?: string | null
+          requested_role?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_militar_id_fkey"
+            columns: ["militar_id"]
+            isOneToOne: false
+            referencedRelation: "militares"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       taf_resultados: {
         Row: {
           abdominal: number | null
           barra: number | null
           chamada: number
+          ciente_at: string | null
+          ciente_by: string | null
           corrida_metros: number | null
           created_at: string
           data_aplicacao: string
@@ -83,6 +105,8 @@ export type Database = {
           abdominal?: number | null
           barra?: number | null
           chamada: number
+          ciente_at?: string | null
+          ciente_by?: string | null
           corrida_metros?: number | null
           created_at?: string
           data_aplicacao?: string
@@ -102,6 +126,8 @@ export type Database = {
           abdominal?: number | null
           barra?: number | null
           chamada?: number
+          ciente_at?: string | null
+          ciente_by?: string | null
           corrida_metros?: number | null
           created_at?: string
           data_aplicacao?: string
@@ -153,6 +179,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_profile: {
+        Args: {
+          _profile_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -160,6 +193,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved: { Args: { _user_id: string }; Returns: boolean }
+      marcar_ciente: { Args: { _resultado_id: string }; Returns: undefined }
+      revoke_profile: { Args: { _profile_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user" | "avaliador"
