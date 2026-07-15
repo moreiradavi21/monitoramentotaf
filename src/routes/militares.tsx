@@ -64,6 +64,7 @@ function MilitaresPage() {
   const [q, setQ] = useState("");
 
   const [nome, setNome] = useState("");
+  const [nomeGuerra, setNomeGuerra] = useState("");
   const [posto, setPosto] = useState<Posto>("soldado");
   const [ident, setIdent] = useState("");
   const [dataNasc, setDataNasc] = useState("");
@@ -71,6 +72,7 @@ function MilitaresPage() {
   function openNew() {
     setEditing(null);
     setNome("");
+    setNomeGuerra("");
     setPosto("soldado");
     setIdent("");
     setDataNasc("");
@@ -80,6 +82,7 @@ function MilitaresPage() {
   function openEdit(m: Militar) {
     setEditing(m);
     setNome(m.nome);
+    setNomeGuerra(m.nome_guerra ?? "");
     setPosto(m.posto);
     setIdent(m.identificacao ?? "");
     setDataNasc(m.data_nascimento ?? "");
