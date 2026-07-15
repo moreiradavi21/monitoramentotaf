@@ -237,6 +237,35 @@ function RegistrosPage() {
     });
   }, [resultados, fTaf, fCh, fPosto, militarById]);
 
+  function exportarPlanilha() {
+    const rows = filtrados.map((r) => {
+      const m = militarById.get(r.militar_id);
+      const p = POSTOS.find((x) => x.value === m?.posto);
+      const mc = extractMencoes(r.observacoes, r.mencao);
+      return {
+        Militar: m?.nome ?? "",
+        Categoria: p?.label ?? "",
+        TAF: r.taf_numero,
+        Chamada: r.chamada,
+        Data: r.data_aplicacao,
+        "Corrida (m)": r.corrida_metros ?? "",
+        "Menção COR": mc.COR,
+        "Flexão": r.flexao ?? "",
+        "Menção FLEX": mc.FLEX,
+        "Abdominal": r.abdominal ?? "",
+        "Menção ABD": mc.ABD,
+        "Barra": r.barra ?? "",
+        "Menção BAR": mc.BAR,
+        "Menção Final": mc.FIN,
+        Observações: r.observacoes ?? "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "TAF");
+    XLSX.writeFile(wb, `TAF_CCAP_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -251,6 +280,7 @@ function RegistrosPage() {
             Registre e edite os resultados dos exercícios por militar.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openNew} disabled={militares.length === 0}>
