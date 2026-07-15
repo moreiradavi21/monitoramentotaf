@@ -195,6 +195,14 @@ export type Database = {
       }
       is_approved: { Args: { _user_id: string }; Returns: boolean }
       marcar_ciente: { Args: { _resultado_id: string }; Returns: undefined }
+      militares_publicos: {
+        Args: never
+        Returns: {
+          id: string
+          nome: string
+          posto: string
+        }[]
+      }
       revoke_profile: { Args: { _profile_id: string }; Returns: undefined }
     }
     Enums: {
