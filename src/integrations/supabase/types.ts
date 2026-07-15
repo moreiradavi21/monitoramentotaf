@@ -17,6 +17,7 @@ export type Database = {
       militares: {
         Row: {
           created_at: string
+          data_nascimento: string | null
           id: string
           identificacao: string | null
           nome: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          data_nascimento?: string | null
           id?: string
           identificacao?: string | null
           nome: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          data_nascimento?: string | null
           id?: string
           identificacao?: string | null
           nome?: string

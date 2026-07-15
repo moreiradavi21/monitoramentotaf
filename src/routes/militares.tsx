@@ -66,12 +66,14 @@ function MilitaresPage() {
   const [nome, setNome] = useState("");
   const [posto, setPosto] = useState<Posto>("soldado");
   const [ident, setIdent] = useState("");
+  const [dataNasc, setDataNasc] = useState("");
 
   function openNew() {
     setEditing(null);
     setNome("");
     setPosto("soldado");
     setIdent("");
+    setDataNasc("");
     setOpen(true);
   }
 
@@ -80,6 +82,7 @@ function MilitaresPage() {
     setNome(m.nome);
     setPosto(m.posto);
     setIdent(m.identificacao ?? "");
+    setDataNasc(m.data_nascimento ?? "");
     setOpen(true);
   }
 
@@ -94,6 +97,7 @@ function MilitaresPage() {
         nome: nome.trim(),
         posto,
         identificacao: ident.trim() || null,
+        data_nascimento: dataNasc || null,
       });
       toast.success(editing ? "Militar atualizado." : "Militar cadastrado.");
       setOpen(false);
@@ -184,6 +188,17 @@ function MilitaresPage() {
                     onChange={(e) => setIdent(e.target.value)}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Data de nascimento</Label>
+                <Input
+                  type="date"
+                  value={dataNasc}
+                  onChange={(e) => setDataNasc(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Usada para calcular automaticamente a menção do TAF por idade.
+                </p>
               </div>
             </div>
             <DialogFooter>

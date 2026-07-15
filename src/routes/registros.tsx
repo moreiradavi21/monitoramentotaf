@@ -44,6 +44,7 @@ import {
   extractMencoes,
   type Posto,
 } from "@/lib/taf";
+import { calcIdade, mencaoPorIdade, mencaoFinalDe } from "@/lib/indices";
 import {
   useDeleteResultado,
   useMilitares,
@@ -143,6 +144,22 @@ function RegistrosPage() {
     return notas.reduce((a, b) => a + b, 0) / notas.length;
   }, [form.nota_flexao, form.nota_abdominal, form.nota_corrida, form.nota_barra]);
 
+  // Cálculo automático de menções por idade a partir das tabelas do Anexo A
+  const militarSel = militares.find((m) => m.id === form.militar_id);
+  const idade = calcIdade(militarSel?.data_nascimento ?? null, form.data_aplicacao);
+  const mencoesAuto = useMemo(() => {
+    return {
+      FLEX: mencaoPorIdade("flexao", idade, num(form.flexao)),
+      ABD: mencaoPorIdade("abdominal", idade, num(form.abdominal)),
+      COR: mencaoPorIdade("corrida", idade, num(form.corrida_metros)),
+      BAR: mencaoPorIdade("barra", idade, num(form.barra)),
+    };
+  }, [idade, form.flexao, form.abdominal, form.corrida_metros, form.barra]);
+  const mencaoFinalAuto = useMemo(
+    () => mencaoFinalDe([mencoesAuto.FLEX, mencoesAuto.ABD, mencoesAuto.COR, mencoesAuto.BAR]),
+    [mencoesAuto],
+  );
+
   async function handleSave() {
     if (!form.militar_id) {
       toast.error("Selecione o militar.");
@@ -152,7 +169,17 @@ function RegistrosPage() {
     const mencao =
       form.mencao && form.mencao.trim().length
         ? form.mencao.trim()
-        : mencaoParaNota(finalNota);
+        : mencaoFinalAuto ?? mencaoParaNota(finalNota);
+    // Observações: mescla o texto do usuário com as menções calculadas por exercício
+    const partes: string[] = [];
+    (["FLEX", "ABD", "COR", "BAR"] as const).forEach((k) => {
+      if (mencoesAuto[k]) partes.push(`${k}:${mencoesAuto[k]}`);
+    });
+    const obsAuto = partes.join(" ");
+    const obsUser = (form.observacoes ?? "")
+      .replace(/(FLEX|ABD|COR|BAR)\s*:\s*[A-Za-zÀ-ÿ]+/gi, "")
+      .trim();
+    const observacoes = [obsAuto, obsUser].filter(Boolean).join(" ").trim() || null;
     try {
       await save.mutateAsync({
         id: form.id,
@@ -170,7 +197,7 @@ function RegistrosPage() {
         nota_barra: num(form.nota_barra),
         nota_final: finalNota,
         mencao: mencao === "—" ? null : mencao,
-        observacoes: form.observacoes?.trim() || null,
+        observacoes,
       });
       toast.success(form.id ? "Registro atualizado." : "TAF registrado.");
       setOpen(false);
@@ -372,12 +399,30 @@ function RegistrosPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Menção</Label>
+                  <Label>
+                    Menção{" "}
+                    <span className="text-xs text-muted-foreground">
+                      (auto por idade: {mencaoFinalAuto ?? "—"})
+                    </span>
+                  </Label>
                   <Input
-                    placeholder={mencaoParaNota(autoMedia)}
+                    placeholder={mencaoFinalAuto ?? mencaoParaNota(autoMedia)}
                     value={form.mencao ?? ""}
                     onChange={(e) => setForm({ ...form, mencao: e.target.value })}
                   />
+                </div>
+              </div>
+
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-3 text-xs">
+                <p className="mb-1 uppercase tracking-widest text-muted-foreground">
+                  Menções automáticas por idade
+                  {idade != null ? ` — ${idade} anos` : militarSel && !militarSel.data_nascimento ? " — cadastre a data de nascimento do militar" : ""}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <span>COR: <b>{mencoesAuto.COR ?? "—"}</b></span>
+                  <span>FLEX: <b>{mencoesAuto.FLEX ?? "—"}</b></span>
+                  <span>ABD: <b>{mencoesAuto.ABD ?? "—"}</b></span>
+                  <span>BAR: <b>{mencoesAuto.BAR ?? "—"}</b></span>
                 </div>
               </div>
 

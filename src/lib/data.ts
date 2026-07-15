@@ -7,6 +7,7 @@ export type Militar = {
   nome: string;
   posto: Posto;
   identificacao: string | null;
+  data_nascimento: string | null;
   created_at: string;
 };
 
@@ -68,19 +69,22 @@ export function useSaveMilitar() {
       nome: string;
       posto: Posto;
       identificacao?: string | null;
+      data_nascimento?: string | null;
     }) => {
+      const payload = {
+        nome: m.nome,
+        posto: m.posto,
+        identificacao: m.identificacao ?? null,
+        data_nascimento: m.data_nascimento ?? null,
+      };
       if (m.id) {
         const { error } = await supabase
           .from("militares")
-          .update({ nome: m.nome, posto: m.posto, identificacao: m.identificacao ?? null })
+          .update(payload)
           .eq("id", m.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("militares").insert({
-          nome: m.nome,
-          posto: m.posto,
-          identificacao: m.identificacao ?? null,
-        });
+        const { error } = await supabase.from("militares").insert(payload);
         if (error) throw error;
       }
     },
