@@ -253,7 +253,7 @@ function ImportarPage() {
 
       // existentesNoPelotao: apenas dos pelotões importados (para a lógica de remoção)
       const existentesNoPelotao = (todos ?? []).filter((m) =>
-        pelotoesImportados.includes(m.pelotao)
+        m.pelotao ? pelotoesImportados.includes(m.pelotao) : false
       );
 
       const nomesNaPlanilha = new Set(todasLinhas.map((l) => l.nome.toUpperCase().trim()));
@@ -279,7 +279,9 @@ function ImportarPage() {
         .map((m) => m.id);
 
       if (inserts.length) {
-        const { error } = await supabase.from("militares").insert(inserts);
+        const { error } = await supabase
+          .from("militares")
+          .upsert(inserts, { onConflict: "nome", ignoreDuplicates: false });
         if (error) throw error;
       }
       for (const u of updates) {
