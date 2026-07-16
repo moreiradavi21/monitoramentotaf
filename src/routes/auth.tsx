@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ShieldCheck } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -179,8 +178,12 @@ function AuthPage() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
       <div className="mb-6 flex items-center justify-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-gold text-gold-foreground">
-          <ShieldCheck className="h-6 w-6" />
+        <div className="flex h-16 w-16 items-center justify-center">
+          <img
+            src="/tucandeira.jpg"
+            alt="Tucandeira CCAP"
+            className="h-16 w-16 rounded-full object-cover"
+          />
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">

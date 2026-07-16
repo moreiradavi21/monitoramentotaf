@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   ClipboardList,
-  ShieldCheck,
   UserCheck,
   Shield,
   FileSpreadsheet,
@@ -50,8 +49,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="hidden lg:flex">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-gold text-gold-foreground">
-            <ShieldCheck className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center">
+            <img
+              src="/tucandeira.jpg"
+              alt="Tucandeira"
+              className="h-10 w-10 rounded-full object-cover"
+            />
           </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
             <span className="font-display text-base tracking-wider text-sidebar-foreground">
