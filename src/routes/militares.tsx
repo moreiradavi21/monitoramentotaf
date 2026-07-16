@@ -444,12 +444,27 @@ function MilitaresPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Identificação (opcional)</Label>
-                  <Input
-                    placeholder="Ex.: nº interno"
-                    value={ident}
-                    onChange={(e) => setIdent(e.target.value)}
-                  />
+                  <Label>Identificação</Label>
+                  <Select
+                    value={ident || "__none__"}
+                    onValueChange={(v) => setIdent(v === "__none__" ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— Não informado —</SelectItem>
+                      <SelectItem value="1° TEN">1° TEN</SelectItem>
+                      <SelectItem value="2° TEN">2° TEN</SelectItem>
+                      <SelectItem value="S TEN">S TEN</SelectItem>
+                      <SelectItem value="1° SGT">1° SGT</SelectItem>
+                      <SelectItem value="2° SGT">2° SGT</SelectItem>
+                      <SelectItem value="3° SGT">3° SGT</SelectItem>
+                      <SelectItem value="CABO">CABO</SelectItem>
+                      <SelectItem value="SOLDADO">SOLDADO</SelectItem>
+                      <SelectItem value="RECRUTA">RECRUTA</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Data de nascimento</Label>
