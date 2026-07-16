@@ -160,9 +160,11 @@ function ImportDialog() {
       const norm = (s:string)=>s.toLowerCase().replace(/\s+/g," ").trim();
       const byNome = new Map((todos??[]).map(m=>[norm(m.nome), m.id]));
       const exNoPelotao = (todos??[]).filter(m=>m.pelotao ? pelotoesImportados.includes(m.pelotao) : false);
-      const nomesNaPlanilha = new Set(all.map(l=>norm(l.nome)));
+      const linhasUnicas = new Map<string, LinhaImport>();
+      for (const l of all) linhasUnicas.set(norm(l.nome), l);
+      const nomesNaPlanilha = new Set(linhasUnicas.keys());
       const inserts: any[]=[], updates: {id:string;payload:any}[]=[];
-      for (const l of all) {
+      for (const l of linhasUnicas.values()) {
         const payload = { nome:l.nome, nome_guerra:l.nome_guerra, posto:l.posto, data_nascimento:l.data_nascimento, pelotao:l.pelotao };
         const id = byNome.get(norm(l.nome));
         if (id) updates.push({id, payload}); else inserts.push(payload);
@@ -171,9 +173,10 @@ function ImportDialog() {
       if (inserts.length) { const {error}=await supabase.from("militares").insert(inserts); if(error) throw error; }
       for (const u of updates) { const {error}=await supabase.from("militares").update(u.payload).eq("id",u.id); if(error) throw error; }
       if (idsRemover.length) { const {error}=await supabase.from("militares").delete().in("id",idsRemover); if(error) throw error; }
+      const duplicadosIgnorados = all.length - linhasUnicas.size;
       setResult({criados:inserts.length, atualizados:updates.length});
       qc.invalidateQueries({queryKey:["militares"]});
-      toast.success(`${inserts.length} criados, ${updates.length} atualizados, ${idsRemover.length} removidos.`);
+      toast.success(`${inserts.length} criados, ${updates.length} atualizados, ${idsRemover.length} removidos${duplicadosIgnorados ? `, ${duplicadosIgnorados} duplicados ignorados` : ""}.`);
     } catch(e:any) { toast.error("Erro: "+(e?.message??"")); }
     finally { setSaving(false); }
   }

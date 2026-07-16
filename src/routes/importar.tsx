@@ -259,11 +259,14 @@ function ImportarPage() {
         m.pelotao ? pelotoesImportados.includes(m.pelotao) : false
       );
 
-      const nomesNaPlanilha = new Set(todasLinhas.map((l) => norm(l.nome)));
+      const linhasUnicas = new Map<string, LinhaImport>();
+      for (const l of todasLinhas) linhasUnicas.set(norm(l.nome), l);
+
+      const nomesNaPlanilha = new Set(linhasUnicas.keys());
       const inserts: any[] = [];
       const updates: { id: string; payload: any }[] = [];
 
-      for (const l of todasLinhas) {
+      for (const l of linhasUnicas.values()) {
         const payload = {
           nome: l.nome,
           nome_guerra: l.nome_guerra,
@@ -300,10 +303,11 @@ function ImportarPage() {
         if (error) throw error;
       }
 
+      const duplicadosIgnorados = todasLinhas.length - linhasUnicas.size;
       setResult({ criados: inserts.length, atualizados: updates.length });
       qc.invalidateQueries({ queryKey: ["militares"] });
       toast.success(
-        `Concluído — ${inserts.length} criados, ${updates.length} atualizados, ${idsParaRemover.length} removidos.`
+        `Concluído — ${inserts.length} criados, ${updates.length} atualizados, ${idsParaRemover.length} removidos${duplicadosIgnorados ? `, ${duplicadosIgnorados} duplicados ignorados` : ""}.`
       );
     } catch (e: any) {
       toast.error("Erro ao salvar: " + (e?.message ?? ""));
