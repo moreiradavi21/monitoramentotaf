@@ -57,6 +57,8 @@ const SHEET_MAP: Record<string, string> = {
   "aprov": "aprove", "aprove": "aprove",
   "enc mat": "enc_mat", "enc. mat": "enc_mat",
   "seç cmd": "sec_cmd", "sec cmd": "sec_cmd", "seção cmd": "sec_cmd",
+  "seç cmd su": "sec_cmd_su", "sec cmd su": "sec_cmd_su", "seção cmd su": "sec_cmd_su",
+  "sessão comando subunidade": "sec_cmd_su", "cmd su": "sec_cmd_su",
 };
 
 type PostoVal = "oficial" | "sargento" | "cabo" | "soldado" | "recruta";
@@ -135,7 +137,7 @@ function ImportDialog() {
     setParsing(true); setGrupos([]); setResult(null); setFileName(file.name);
     try {
       const g = await parseXlsx(file);
-      if (!g.length) { toast.error("Nenhuma aba reconhecida. Use: Pel Com, Morteiro, Anticarro, Saúde, APROV, Enc Mat, Seç Cmd."); return; }
+      if (!g.length) { toast.error("Nenhuma aba reconhecida. Use: Pel Com, Morteiro, Anticarro, Saúde, APROV, Enc Mat, Seç Cmd, Seç Cmd Su."); return; }
       setGrupos(g);
       const total = g.reduce((s,x)=>s+x.count,0);
       toast.success(`${total} militares em ${g.length} pelotão(ões) detectados.`);

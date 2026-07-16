@@ -22,6 +22,7 @@ export const PELOTOES = [
   { value: "aprove", label: "Pel Aprove" },
   { value: "enc_mat", label: "ENC MAT" },
   { value: "sec_cmd", label: "Seção CMD" },
+  { value: "sec_cmd_su", label: "Seção Cmd Su" },
 ] as const;
 
 export type Pelotao = (typeof PELOTOES)[number]["value"];

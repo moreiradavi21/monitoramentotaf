@@ -45,6 +45,11 @@ const SHEET_MAP: Record<string, string> = {
   "seç cmd": "sec_cmd",
   "sec cmd": "sec_cmd",
   "seção cmd": "sec_cmd",
+  "seç cmd su": "sec_cmd_su",
+  "sec cmd su": "sec_cmd_su",
+  "seção cmd su": "sec_cmd_su",
+  "sessão comando subunidade": "sec_cmd_su",
+  "cmd su": "sec_cmd_su",
 };
 
 function resolvePelotao(sheetName: string): string | null {
@@ -197,7 +202,7 @@ function ImportarPage() {
 
         if (!parsed.length) {
           toast.error(
-            "Nenhuma aba reconhecida. Verifique os nomes: Pel Com, Morteiro, Anticarro, Saúde, APROV, Enc Mat, Seç Cmd.",
+            "Nenhuma aba reconhecida. Verifique os nomes: Pel Com, Morteiro, Anticarro, Saúde, APROV, Enc Mat, Seç Cmd, Seç Cmd Su.",
           );
           return;
         }
@@ -489,6 +494,7 @@ function ImportarPage() {
               { sheet: "APROV", label: "Pel Aprove" },
               { sheet: "Enc Mat", label: "ENC MAT" },
               { sheet: "Seç Cmd", label: "Seção CMD" },
+              { sheet: "Seç Cmd Su", label: "Seção Cmd Su" },
             ].map((item) => (
               <div key={item.sheet} className="flex items-center gap-2">
                 <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{item.sheet}</code>
