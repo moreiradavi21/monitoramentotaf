@@ -180,7 +180,7 @@ function AuthPage() {
       <div className="mb-6 flex items-center justify-center gap-3">
         <div className="flex h-16 w-16 items-center justify-center">
           <img
-            src="/tucandeira.jpg"
+            src="/tucandeira.png"
             alt="Tucandeira CCAP"
             className="h-16 w-16 rounded-full object-cover"
           />

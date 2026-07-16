@@ -1,50 +1,37 @@
 @echo off
-echo === Copiando imagem Tucandeira para o projeto ===
+echo === Copiando imagem Tucandeira PNG para o projeto ===
 
-set DEST_DIR=C:\Users\PC\Documents\GitHub\monitoramentotaf\public
-set DOWNLOADS=%USERPROFILE%\Downloads
+set DEST=C:\Users\PC\Documents\GitHub\monitoramentotaf\public\tucandeira.png
+set UPLOADS=C:\Users\PC\AppData\Roaming\Claude\local-agent-mode-sessions\2d2c0f64-2438-48d7-b15d-9e0959a8d7b1\046d1ebe-a230-4192-9d23-470575fdf64a\local_0fa3bf8c-d9e1-4925-866a-5f008cb20464\uploads
 
-echo Procurando TUCANDEIRA em Downloads...
+echo Procurando PNG mais recente em uploads do Claude...
 
-IF EXIST "%DOWNLOADS%\TUCANDEIRA.jpg" (
-    copy "%DOWNLOADS%\TUCANDEIRA.jpg" "%DEST_DIR%\tucandeira.jpg"
-    echo Copiado como tucandeira.jpg
-    goto :done
-)
-
-IF EXIST "%DOWNLOADS%\TUCANDEIRA.jpeg" (
-    copy "%DOWNLOADS%\TUCANDEIRA.jpeg" "%DEST_DIR%\tucandeira.jpg"
-    echo Copiado como tucandeira.jpg
-    goto :done
-)
-
-IF EXIST "%DOWNLOADS%\TUCANDEIRA.png" (
-    copy "%DOWNLOADS%\TUCANDEIRA.png" "%DEST_DIR%\tucandeira.png"
+for /f "delims=" %%i in ('dir /b /o-d /a-d "%UPLOADS%\*.png" 2^>nul') do (
+    echo Encontrado: %%i
+    copy "%UPLOADS%\%%i" "%DEST%"
     echo Copiado como tucandeira.png
     goto :done
 )
 
-REM Tenta sem extensao (o Windows as vezes salva sem extensao)
-for %%e in (jpg jpeg png JPG JPEG PNG) do (
-    IF EXIST "%DOWNLOADS%\TUCANDEIRA.%%e" (
-        copy "%DOWNLOADS%\TUCANDEIRA.%%e" "%DEST_DIR%\tucandeira.jpg"
-        echo Copiado: TUCANDEIRA.%%e
-        goto :done
-    )
-)
+echo PNG nao encontrado em uploads. Tentando Downloads...
+set DL=%USERPROFILE%\Downloads
 
-echo Arquivo nao encontrado. Copiando qualquer imagem JPEG recente de Downloads...
-for /f "delims=" %%i in ('dir /b /o-d /a-d "%DOWNLOADS%\TUCANDEIRA*" 2^>nul') do (
-    copy "%DOWNLOADS%\%%i" "%DEST_DIR%\tucandeira.jpg"
-    echo Copiado: %%i
+for /f "delims=" %%i in ('dir /b /o-d /a-d "%DL%\*.png" 2^>nul') do (
+    echo Encontrado em Downloads: %%i
+    copy "%DL%\%%i" "%DEST%"
+    echo Copiado como tucandeira.png
     goto :done
 )
 
-echo ERRO: TUCANDEIRA nao encontrado em Downloads
-echo Por favor copie manualmente a imagem para: %DEST_DIR%\tucandeira.jpg
+echo Nenhum PNG encontrado automaticamente.
+echo Por favor copie manualmente o PNG da Tucandeira para:
+echo %DEST%
+goto :end
 
 :done
 echo.
-echo Pasta public:
-dir "%DEST_DIR%\tucandeira*" 2>nul
+echo Arquivo copiado:
+dir "%DEST%"
+
+:end
 pause
