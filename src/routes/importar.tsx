@@ -253,7 +253,7 @@ function ImportarPage() {
 
       // existentesNoPelotao: apenas dos pelotões importados (para a lógica de remoção)
       const existentesNoPelotao = (todos ?? []).filter((m) =>
-        pelotoesImportados.includes(m.pelotao)
+        m.pelotao ? pelotoesImportados.includes(m.pelotao) : false
       );
 
       const nomesNaPlanilha = new Set(todasLinhas.map((l) => l.nome.toUpperCase().trim()));
