@@ -66,6 +66,10 @@ export function mencaoColor(mencao: string | null | undefined): string {
 
 export type ExerKey = "COR" | "FLEX" | "ABD" | "BAR" | "FIN";
 
+/**
+ * Extrai as menções por exercício das observações, no formato
+ * "FLEX:X ABD:Y COR:Z BAR:W SUF:V". FIN vem da menção final do registro.
+ */
 export function extractMencoes(
   observacoes: string | null | undefined,
   mencaoFinal: string | null | undefined,
@@ -103,6 +107,8 @@ const MENCAO_SCORE: Record<string, number> = {
   INSUFICIENTE: 1,
 };
 
+/** Média das menções: converte cada menção em score 1..5, calcula média,
+ *  devolve label + score. */
 export function mencaoMedia(
   mencoes: (string | null | undefined)[],
 ): { label: string; short: string; score: number | null } {
