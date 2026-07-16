@@ -88,6 +88,7 @@ export type Database = {
       taf_resultados: {
         Row: {
           abdominal: number | null
+          avaliador_id: string | null
           barra: number | null
           chamada: number
           ciente_at: string | null
@@ -109,6 +110,7 @@ export type Database = {
         }
         Insert: {
           abdominal?: number | null
+          avaliador_id?: string | null
           barra?: number | null
           chamada: number
           ciente_at?: string | null
@@ -130,6 +132,7 @@ export type Database = {
         }
         Update: {
           abdominal?: number | null
+          avaliador_id?: string | null
           barra?: number | null
           chamada?: number
           ciente_at?: string | null
@@ -192,13 +195,15 @@ export type Database = {
         }
         Returns: undefined
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | { Args: { _role: string }; Returns: boolean }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
       is_approved: { Args: { _user_id: string }; Returns: boolean }
       marcar_ciente: { Args: { _resultado_id: string }; Returns: undefined }
       militares_publicos: {
