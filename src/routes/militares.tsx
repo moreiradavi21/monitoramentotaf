@@ -167,7 +167,7 @@ function ImportDialog() {
         if (id) updates.push({id, payload}); else inserts.push(payload);
       }
       const idsRemover = exNoPelotao.filter(m=>!nomesNaPlanilha.has(m.nome.toUpperCase().trim())).map(m=>m.id);
-      if (inserts.length) { const {error}=await supabase.from("militares").insert(inserts); if(error) throw error; }
+      if (inserts.length) { const {error}=await supabase.from("militares").upsert(inserts, { onConflict: "nome", ignoreDuplicates: false }); if(error) throw error; }
       for (const u of updates) { const {error}=await supabase.from("militares").update(u.payload).eq("id",u.id); if(error) throw error; }
       if (idsRemover.length) { const {error}=await supabase.from("militares").delete().in("id",idsRemover); if(error) throw error; }
       setResult({criados:inserts.length, atualizados:updates.length});
