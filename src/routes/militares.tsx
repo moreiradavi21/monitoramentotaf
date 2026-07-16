@@ -59,6 +59,8 @@ const SHEET_MAP: Record<string, string> = {
   "seç cmd": "sec_cmd", "sec cmd": "sec_cmd", "seção cmd": "sec_cmd",
   "seç cmd su": "sec_cmd_su", "sec cmd su": "sec_cmd_su", "seção cmd su": "sec_cmd_su",
   "sessão comando subunidade": "sec_cmd_su", "cmd su": "sec_cmd_su",
+  "pmt": "pmt", "pel transporte": "pmt", "pelotão de transporte": "pmt",
+  "pel de transporte": "pmt", "transporte": "pmt",
 };
 
 type PostoVal = "oficial" | "sargento" | "cabo" | "soldado" | "recruta";

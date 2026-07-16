@@ -1,32 +1,19 @@
 @echo off
 cd /d "C:\Users\PC\Documents\GitHub\monitoramentotaf"
 
-echo === Verificando estado do git ===
+echo === Status atual ===
 git status
 
 echo.
-echo === Adicionando taf.ts (resolver conflito de merge) ===
-git add src/lib/taf.ts
-
-echo.
-echo === Verificando se ha merge pendente ===
-IF EXIST ".git\MERGE_HEAD" (
-    echo Completando merge pendente...
-    git commit --no-edit
-) ELSE (
-    echo Nao ha merge pendente.
-)
-
-echo.
-echo === Adicionando todos os arquivos modificados ===
+echo === Adicionando todos os arquivos ===
 git add -A
 
 echo.
-echo === Commit das novas funcionalidades ===
-git commit -m "feat: paginas por pelotao, importar planilha inline, Pel Aprove"
+echo === Commit ===
+git commit -m "feat: Sec Cmd Su, PMT, logo Tucandeira, sync completa importacao"
 
 echo.
-echo === Push para GitHub ===
+echo === Push ===
 git push origin main
 
 echo.

@@ -50,6 +50,11 @@ const SHEET_MAP: Record<string, string> = {
   "seção cmd su": "sec_cmd_su",
   "sessão comando subunidade": "sec_cmd_su",
   "cmd su": "sec_cmd_su",
+  "pmt": "pmt",
+  "pel transporte": "pmt",
+  "pelotão de transporte": "pmt",
+  "pel de transporte": "pmt",
+  "transporte": "pmt",
 };
 
 function resolvePelotao(sheetName: string): string | null {
@@ -495,6 +500,7 @@ function ImportarPage() {
               { sheet: "Enc Mat", label: "ENC MAT" },
               { sheet: "Seç Cmd", label: "Seção CMD" },
               { sheet: "Seç Cmd Su", label: "Seção Cmd Su" },
+              { sheet: "PMT", label: "Pel Transporte" },
             ].map((item) => (
               <div key={item.sheet} className="flex items-center gap-2">
                 <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{item.sheet}</code>
