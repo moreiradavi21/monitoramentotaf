@@ -16,6 +16,7 @@ import { Route as ImportarRouteImport } from './routes/importar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PelotaoPelotaoIdRouteImport } from './routes/pelotao.$pelotaoId'
 
 const RegistrosRoute = RegistrosRouteImport.update({
   id: '/registros',
@@ -52,6 +53,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PelotaoPelotaoIdRoute = PelotaoPelotaoIdRouteImport.update({
+  id: '/pelotao/$pelotaoId',
+  path: '/pelotao/$pelotaoId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
+  '/pelotao/$pelotaoId': typeof PelotaoPelotaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
+  '/pelotao/$pelotaoId': typeof PelotaoPelotaoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
+  '/pelotao/$pelotaoId': typeof PelotaoPelotaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/meus-resultados'
     | '/militares'
     | '/registros'
+    | '/pelotao/$pelotaoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/meus-resultados'
     | '/militares'
     | '/registros'
+    | '/pelotao/$pelotaoId'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/meus-resultados'
     | '/militares'
     | '/registros'
+    | '/pelotao/$pelotaoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   MeusResultadosRoute: typeof MeusResultadosRoute
   MilitaresRoute: typeof MilitaresRoute
   RegistrosRoute: typeof RegistrosRoute
+  PelotaoPelotaoIdRoute: typeof PelotaoPelotaoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelotao/$pelotaoId': {
+      id: '/pelotao/$pelotaoId'
+      path: '/pelotao/$pelotaoId'
+      fullPath: '/pelotao/$pelotaoId'
+      preLoaderRoute: typeof PelotaoPelotaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeusResultadosRoute: MeusResultadosRoute,
   MilitaresRoute: MilitaresRoute,
   RegistrosRoute: RegistrosRoute,
+  PelotaoPelotaoIdRoute: PelotaoPelotaoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
