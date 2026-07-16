@@ -14,6 +14,9 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    pelotao: typeof search.pelotao === "string" ? search.pelotao : undefined,
+  }),
   component: Dashboard,
 });
 
@@ -26,17 +29,26 @@ function isInsuf(mencao: string | null | undefined): boolean {
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
+  const { pelotao } = Route.useSearch();
   const { isAdmin, isAvaliador, isCompanhia } = useAuth();
   const militaresQ = useMilitares();
   const resQ = useResultados();
 
   const loading = militaresQ.isLoading || resQ.isLoading;
-  const militares = militaresQ.data ?? [];
+  const allMilitares = militaresQ.data ?? [];
   const resultados = resQ.data ?? [];
 
+  // Filtra militares pelo pelotão selecionado via URL (?pelotao=xxx)
+  const militares = useMemo(
+    () => pelotao ? allMilitares.filter((m) => m.pelotao === pelotao) : allMilitares,
+    [allMilitares, pelotao],
+  );
+
   const resultsForEdicao = useMemo(
-    () => resultados.filter((r) => r.taf_numero === taf && r.chamada === chamada),
-    [resultados, taf, chamada],
+    () => resultados
+      .filter((r) => r.taf_numero === taf && r.chamada === chamada)
+      .filter((r) => militares.some((m) => m.id === r.militar_id)),
+    [resultados, taf, chamada, militares],
   );
 
   const byPosto = useMemo(() => {

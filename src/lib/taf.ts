@@ -14,6 +14,20 @@ export const postoLabel = (p: Posto) =>
 export const postoPlural = (p: Posto) =>
   POSTOS.find((x) => x.value === p)?.plural ?? p;
 
+export const PELOTOES = [
+  { value: "comunicacoes", label: "Pel Comunicações" },
+  { value: "morteiro",     label: "Pel Morteiro" },
+  { value: "anticarro",   label: "Pel Anticarro" },
+  { value: "saude",       label: "Pel Saúde" },
+  { value: "enc_mat",     label: "ENC MAT" },
+  { value: "sec_cmd",     label: "Seção CMD" },
+] as const;
+
+export type Pelotao = (typeof PELOTOES)[number]["value"];
+
+export const pelotaoLabel = (p: string) =>
+  PELOTOES.find((x) => x.value === p)?.label ?? p;
+
 export const TAF_NUMEROS = [1, 2, 3] as const;
 export const CHAMADAS = [1, 2] as const;
 
