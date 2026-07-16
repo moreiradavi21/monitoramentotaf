@@ -658,6 +658,8 @@ function RegistrosPage() {
                       setNovoMilitarOpen(false);
                       setMilitarSearch("");
                       if (created?.id) {
+                        // Aguarda o refetch para garantir que o novo militar esteja no array
+                        await queryClient.refetchQueries({ queryKey: ["militares"] });
                         // Abre o formulário de TAF já com o novo militar selecionado
                         setForm({ ...emptyForm(), militar_id: created.id });
                         setOpen(true);
