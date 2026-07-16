@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, type Posto } from "@/lib/taf";
+import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, extractMencoes, type Posto, type ExerKey } from "@/lib/taf";
 import { useMilitares, useResultados, type Militar, type TafResultado } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
