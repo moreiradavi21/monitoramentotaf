@@ -157,13 +157,13 @@ export function useSaveResultado() {
       if (r.id) {
         const { error } = await supabase
           .from("taf_resultados")
-          .update(payload)
+          .update(payload as any)
           .eq("id", r.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("taf_resultados")
-          .upsert(payload, { onConflict: "militar_id,taf_numero,chamada" });
+          .upsert(payload as any, { onConflict: "militar_id,taf_numero,chamada" });
         if (error) throw error;
       }
     },
