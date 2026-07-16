@@ -8,11 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { POSTOS, PELOTOES, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, type Posto } from "@/lib/taf";
+import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, type Posto } from "@/lib/taf";
 import { useMilitares, useResultados } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    pelotao: typeof search.pelotao === "string" ? search.pelotao : undefined,
+  }),
   component: Dashboard,
 });
 
@@ -33,7 +36,7 @@ const RANK_LABEL = ["1º", "2º", "3º"];
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
-  const [pelotao, setPelotao] = useState<string>("todos");
+  const { pelotao } = Route.useSearch();
   const { isAdmin, isAvaliador, isCompanhia } = useAuth();
   const militaresQ = useMilitares();
   const resQ = useResultados();
@@ -47,14 +50,16 @@ function Dashboard() {
     [resultados, taf, chamada],
   );
 
+  // Filtra militares pelo pelotão selecionado (via URL search param)
   const filteredMilitares = useMemo(
     () =>
-      pelotao === "todos"
+      !pelotao
         ? militares
         : militares.filter((m) => m.pelotao === pelotao),
     [militares, pelotao],
   );
 
+  // Resultados apenas do pelotão selecionado
   const filteredResults = useMemo(
     () =>
       resultsForEdicao.filter((r) =>
@@ -83,6 +88,7 @@ function Dashboard() {
     });
   }, [filteredMilitares, filteredResults]);
 
+  // Top 3 Cabos e Soldados — média das notas de todos os exercícios
   const top3 = useMemo(() => {
     const cabosESoldados = filteredMilitares.filter(
       (m) => m.posto === "cabo" || m.posto === "soldado",
@@ -146,6 +152,7 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* TAF e Chamada */}
       <div className="flex flex-wrap gap-4">
         <Tabs value={String(taf)} onValueChange={(v) => setTaf(Number(v))}>
           <TabsList>
@@ -161,22 +168,6 @@ function Dashboard() {
             {CHAMADAS.map((c) => (
               <TabsTrigger key={c} value={String(c)}>
                 {c}ª Chamada
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div>
-        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">
-          Pelotão / Seção
-        </p>
-        <Tabs value={pelotao} onValueChange={setPelotao}>
-          <TabsList className="flex h-auto flex-wrap gap-1">
-            <TabsTrigger value="todos">Todos</TabsTrigger>
-            {PELOTOES.map((p) => (
-              <TabsTrigger key={p.value} value={p.value}>
-                {p.label}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -219,6 +210,7 @@ function Dashboard() {
         />
       </div>
 
+      {/* ── Top 3 Cabos e Soldados ───────────────────────────────── */}
       {(hasTop3 || loading) && (
         <Card className="border-border/70">
           <CardHeader className="pb-2">
@@ -250,9 +242,12 @@ function Dashboard() {
                     key={militar.id}
                     className={`flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
                   >
+                    {/* Posição */}
                     <span className={`w-7 shrink-0 text-center text-lg font-bold ${MEDAL_COLORS[idx]}`}>
                       {RANK_LABEL[idx]}
                     </span>
+
+                    {/* Nome e posto */}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium leading-tight">
                         {militar.nome_guerra ?? militar.nome}
@@ -261,6 +256,8 @@ function Dashboard() {
                         {militar.posto}
                       </p>
                     </div>
+
+                    {/* Índices numéricos por exercício */}
                     <div className="flex flex-wrap gap-3 text-center">
                       {[
                         { label: "Corrida", value: r.corrida_metros, unit: "m" },
@@ -283,6 +280,8 @@ function Dashboard() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Média das notas */}
                     <div className="ml-auto text-right">
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                         Média
@@ -299,6 +298,7 @@ function Dashboard() {
         </Card>
       )}
 
+      {/* ── Cards por posto ───────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {loading &&
           Array.from({ length: 5 }).map((_, i) => (
