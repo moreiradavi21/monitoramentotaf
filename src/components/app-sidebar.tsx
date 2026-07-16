@@ -5,11 +5,9 @@ import {
   ClipboardList,
   ShieldCheck,
   UserCheck,
-  Upload,
+  Shield,
 } from "lucide-react";
-
-
-
+import { PELOTOES } from "@/lib/taf";
 
 import {
   Sidebar,
@@ -25,31 +23,29 @@ import {
 import { useAuth } from "@/lib/auth";
 
 /**
- * Sidebar de navegação — visível para administradores e avaliadores em telas lg+.
- * Militares da companhia usam a barra de navegação inferior (BottomNav)
+ * Sidebar de navegação — visível apenas para administradores em telas lg+.
+ * Avaliadores e militares da companhia usam a barra de navegação inferior (BottomNav)
  * definida em __root.tsx.
  */
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { isAdmin, isAvaliador, approved } = useAuth();
+  const searchStr = useRouterState({ select: (r) => r.location.searchStr });
+  const { isAdmin, approved } = useAuth();
+  const activePelotao =
+    new URLSearchParams(searchStr).get("pelotao") ?? "todos";
 
-  if (!isAvaliador || !approved) return null;
+  // Sidebar exclusiva para admin; non-admin nunca vê a barra lateral
+  if (!isAdmin || !approved) return null;
 
   const isActive = (p: string) =>
     p === "/" ? pathname === "/" : pathname.startsWith(p);
 
-  const items = isAdmin
-    ? [
-        { title: "Painel TAF", url: "/", icon: LayoutDashboard },
-        { title: "Militares", url: "/militares", icon: Users },
-        { title: "Registros", url: "/registros", icon: ClipboardList },
-        { title: "Importar", url: "/importar", icon: Upload },
-        { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
-      ]
-    : [
-        { title: "Militares", url: "/militares", icon: Users },
-        { title: "Registros", url: "/registros", icon: ClipboardList },
-      ];
+  const items = [
+    { title: "Painel TAF", url: "/", icon: LayoutDashboard },
+    { title: "Militares", url: "/militares", icon: Users },
+    { title: "Registros", url: "/registros", icon: ClipboardList },
+    { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="hidden lg:flex">
@@ -80,6 +76,30 @@ export function AppSidebar() {
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Pelotões / Seções</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {PELOTOES.map((p) => (
+                <SidebarMenuItem key={p.value}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/" && activePelotao === p.value}
+                  >
+                    <Link
+                      to="/"
+                      search={{ pelotao: p.value }}
+                      className="flex items-center gap-2"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>{p.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
