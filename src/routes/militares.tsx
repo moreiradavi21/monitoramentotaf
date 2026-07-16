@@ -154,9 +154,11 @@ function ImportDialog() {
     try {
       // Pelotões presentes na planilha (só esses são sincronizados)
       const pelotoesImportados = [...new Set(grupos.map(g=>g.pelotao))];
-      const { data: ex, error: e0 } = await supabase.from("militares").select("id,nome,pelotao").in("pelotao", pelotoesImportados);
+      // Busca TODOS para evitar violação de unique constraint em nome
+      const { data: todos, error: e0 } = await supabase.from("militares").select("id,nome,pelotao");
       if (e0) throw e0;
-      const byNome = new Map((ex??[]).map(m=>[m.nome.toUpperCase().trim(), m.id]));
+      const byNome = new Map((todos??[]).map(m=>[m.nome.toUpperCase().trim(), m.id]));
+      const exNoPelotao = (todos??[]).filter(m=>pelotoesImportados.includes(m.pelotao));
       const nomesNaPlanilha = new Set(all.map(l=>l.nome.toUpperCase().trim()));
       const inserts: any[]=[], updates: {id:string;payload:any}[]=[];
       for (const l of all) {
@@ -164,7 +166,7 @@ function ImportDialog() {
         const id = byNome.get(l.nome.toUpperCase().trim());
         if (id) updates.push({id, payload}); else inserts.push(payload);
       }
-      const idsRemover = (ex??[]).filter(m=>!nomesNaPlanilha.has(m.nome.toUpperCase().trim())).map(m=>m.id);
+      const idsRemover = exNoPelotao.filter(m=>!nomesNaPlanilha.has(m.nome.toUpperCase().trim())).map(m=>m.id);
       if (inserts.length) { const {error}=await supabase.from("militares").insert(inserts); if(error) throw error; }
       for (const u of updates) { const {error}=await supabase.from("militares").update(u.payload).eq("id",u.id); if(error) throw error; }
       if (idsRemover.length) { const {error}=await supabase.from("militares").delete().in("id",idsRemover); if(error) throw error; }

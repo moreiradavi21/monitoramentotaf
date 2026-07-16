@@ -241,15 +241,20 @@ function ImportarPage() {
       // Pelotões presentes na planilha (só esses serão sincronizados)
       const pelotoesImportados = [...new Set(grupos.map((g) => g.pelotao))];
 
-      // Busca militares existentes apenas dos pelotões importados
-      const { data: existentes, error: e0 } = await supabase
+      // Busca TODOS os militares para evitar violação de unique constraint em nome
+      const { data: todos, error: e0 } = await supabase
         .from("militares")
-        .select("id,nome,pelotao")
-        .in("pelotao", pelotoesImportados);
+        .select("id,nome,pelotao");
       if (e0) throw e0;
 
+      // byNome: mapa global nome → id (para detectar duplicatas em qualquer pelotão)
       const byNome = new Map<string, string>();
-      for (const m of existentes ?? []) byNome.set(m.nome.toUpperCase().trim(), m.id);
+      for (const m of todos ?? []) byNome.set(m.nome.toUpperCase().trim(), m.id);
+
+      // existentesNoPelotao: apenas dos pelotões importados (para a lógica de remoção)
+      const existentesNoPelotao = (todos ?? []).filter((m) =>
+        pelotoesImportados.includes(m.pelotao)
+      );
 
       const nomesNaPlanilha = new Set(todasLinhas.map((l) => l.nome.toUpperCase().trim()));
       const inserts: any[] = [];
@@ -269,7 +274,7 @@ function ImportarPage() {
       }
 
       // Remove militares dos pelotões importados que não estão na planilha
-      const idsParaRemover = (existentes ?? [])
+      const idsParaRemover = existentesNoPelotao
         .filter((m) => !nomesNaPlanilha.has(m.nome.toUpperCase().trim()))
         .map((m) => m.id);
 
