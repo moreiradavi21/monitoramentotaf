@@ -64,21 +64,15 @@ export function mencaoPorIdade(
   return null;
 }
 
-const SCORE: Record<string, number> = { E:5, MB:4, B:3, R:2, SUF:2, I:1, INSUF:1 };
+// Ordem crescente de qualidade: INSUF/I=1, R/SUF=2, B=3, MB=4, E=5
+const ORDER: Record<string, number> = { E: 5, MB: 4, B: 3, R: 2, SUF: 2, I: 1, INSUF: 1 };
 
-/** Combina as menções por exercício em menção final. Se qualquer INSUF/I → I.
- *  Caso contrário usa a menção mediana pela média dos escores. */
+/** Menção final = pior índice entre os exercícios (regra do puxador).
+ *  Exemplo: MB+MB+MB+I → I   |   E+MB+R+I → I */
 export function mencaoFinalDe(mencoes: (string | null | undefined)[]): string | null {
   const list = mencoes.filter((x): x is string => !!x);
   if (!list.length) return null;
-  if (list.some((m) => m === "I" || m === "INSUF")) return "I";
-  const scores = list.map((m) => SCORE[m] ?? 0).filter((n) => n > 0);
-  if (!scores.length) return null;
-  const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
-  if (list.every((m) => m === "SUF")) return "SUF";
-  if (avg >= 4.5) return "E";
-  if (avg >= 3.5) return "MB";
-  if (avg >= 2.5) return "B";
-  if (avg >= 1.5) return "R";
-  return "I";
+  return list.reduce((worst, cur) =>
+    (ORDER[cur] ?? 0) < (ORDER[worst] ?? 0) ? cur : worst
+  );
 }
