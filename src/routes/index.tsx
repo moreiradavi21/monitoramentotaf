@@ -33,8 +33,12 @@ const RANK_LABEL = ["1º", "2º", "3º"];
 interface Top3Item {
   militar: Militar;
   r: TafResultado;
-  media: number;
+  mencoes: Record<ExerKey, string>;
+  media: ReturnType<typeof mencaoMedia>;
+  score: number;
 }
+
+const EXER_ORDER: ExerKey[] = ["COR", "FLEX", "ABD", "BAR"];
 
 function calcularTop3(
   militares: Militar[],
@@ -46,15 +50,15 @@ function calcularTop3(
     .map((militar) => {
       const r = resultados.find((x) => x.militar_id === militar.id);
       if (!r) return null;
-      const notas = [r.nota_corrida, r.nota_flexao, r.nota_abdominal, r.nota_barra].filter(
-        (n): n is number => n != null,
-      );
-      if (!notas.length) return null;
-      const media = notas.reduce((a, b) => a + b, 0) / notas.length;
-      return { militar, r, media };
+      const mencoes = extractMencoes(r.observacoes, r.mencao);
+      const listaMencoes = EXER_ORDER.map((k) => mencoes[k]).filter((m) => m !== "—");
+      if (!listaMencoes.length) return null;
+      const media = mencaoMedia(listaMencoes);
+      if (media.score == null) return null;
+      return { militar, r, mencoes, media, score: media.score };
     })
     .filter((x): x is Top3Item => x !== null)
-    .sort((a, b) => b.media - a.media)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 }
 
