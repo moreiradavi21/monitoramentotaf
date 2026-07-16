@@ -242,10 +242,10 @@ function RegistrosPage() {
     [militares],
   );
 
-  // Avaliadores vêem apenas seus próprios registros; admin vê todos
+  // Avaliadores vêem seus próprios registros e os sem avaliador atribuído; admin vê todos
   const resultadosPorPapel = useMemo(() => {
     if (isAdmin) return resultados;
-    return resultados.filter((r) => r.avaliador_id === user?.id);
+    return resultados.filter((r) => r.avaliador_id === user?.id || r.avaliador_id === null);
   }, [resultados, isAdmin, user?.id]);
 
   const filtrados = useMemo(() => {
