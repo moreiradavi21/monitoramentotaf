@@ -9,6 +9,7 @@ export type Militar = {
   posto: Posto;
   identificacao: string | null;
   data_nascimento: string | null;
+  pelotao: string | null;
   created_at: string;
 };
 
@@ -74,6 +75,7 @@ export function useSaveMilitar() {
       posto: Posto;
       identificacao?: string | null;
       data_nascimento?: string | null;
+      pelotao?: string | null;
     }) => {
       const payload = {
         nome: m.nome,
@@ -81,6 +83,7 @@ export function useSaveMilitar() {
         posto: m.posto,
         identificacao: m.identificacao ?? null,
         data_nascimento: m.data_nascimento ?? null,
+        pelotao: m.pelotao ?? null,
       };
       if (m.id) {
         const { error } = await supabase
@@ -126,11 +129,10 @@ export function useSaveResultado() {
         taf_numero: number;
         chamada: number;
         data_aplicacao: string;
-        /** ID do usuário avaliador; passe somente ao criar (undefined ao editar) */
         avaliador_id?: string | null;
       },
     ) => {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         militar_id: r.militar_id,
         taf_numero: r.taf_numero,
         chamada: r.chamada,
@@ -148,7 +150,9 @@ export function useSaveResultado() {
         observacoes: r.observacoes ?? null,
       };
 
-      // avaliador_id não é persistido (coluna inexistente no schema atual)
+      if (!r.id && r.avaliador_id !== undefined) {
+        payload.avaliador_id = r.avaliador_id ?? null;
+      }
 
       if (r.id) {
         const { error } = await supabase

@@ -14,6 +14,20 @@ export const postoLabel = (p: Posto) =>
 export const postoPlural = (p: Posto) =>
   POSTOS.find((x) => x.value === p)?.plural ?? p;
 
+export const PELOTOES = [
+  { value: "comunicacoes", label: "Pel Comunicações" },
+  { value: "morteiro", label: "Pel Morteiro" },
+  { value: "anticarro", label: "Pel Anticarro" },
+  { value: "saude", label: "Pel Saúde" },
+  { value: "enc_mat", label: "ENC MAT" },
+  { value: "sec_cmd", label: "Seção CMD" },
+] as const;
+
+export type Pelotao = (typeof PELOTOES)[number]["value"];
+
+export const pelotaoLabel = (p: string) =>
+  PELOTOES.find((x) => x.value === p)?.label ?? p;
+
 export const TAF_NUMEROS = [1, 2, 3] as const;
 export const CHAMADAS = [1, 2] as const;
 
@@ -52,10 +66,6 @@ export function mencaoColor(mencao: string | null | undefined): string {
 
 export type ExerKey = "COR" | "FLEX" | "ABD" | "BAR" | "FIN";
 
-/**
- * Extrai as menções por exercício das observações, no formato
- * "FLEX:X ABD:Y COR:Z BAR:W SUF:V". FIN vem da menção final do registro.
- */
 export function extractMencoes(
   observacoes: string | null | undefined,
   mencaoFinal: string | null | undefined,
@@ -93,8 +103,6 @@ const MENCAO_SCORE: Record<string, number> = {
   INSUFICIENTE: 1,
 };
 
-/** Média das menções: converte cada menção em score 1..5, calcula média,
- *  devolve label + score. */
 export function mencaoMedia(
   mencoes: (string | null | undefined)[],
 ): { label: string; short: string; score: number | null } {
