@@ -46,7 +46,7 @@ const POSTOS_AVAL_ADMIN = POSTOS_MILITARES.filter(
 
 
 const REQUESTED_ROLES = [
-  { value: "companhia", label: "Militar da Companhia", desc: "Visualiza os índices e dá ciente no próprio TAF." },
+  { value: "companhia", label: "Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF." },
   { value: "avaliador", label: "Militar Avaliador", desc: "Lança e edita os resultados do TAF (requer aprovação)." },
   { value: "administrador", label: "Militar Administrador", desc: "Gerencia militares, TAF e aprovações (requer aprovação)." },
 ] as const;

@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Users, Activity, TrendingUp, AlertTriangle, Trophy } from "lucide-react";
 
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +24,14 @@ function isInsuf(mencao: string | null | undefined): boolean {
   const m = mencao.trim().toUpperCase();
   return m === "I" || m === "INSUF" || m === "INSUFICIENTE";
 }
+
+const MEDAL_COLORS = ["text-yellow-500", "text-slate-400", "text-amber-700"];
+const MEDAL_BG = [
+  "bg-yellow-500/10 border-yellow-500/40",
+  "bg-slate-400/10 border-slate-400/30",
+  "bg-amber-700/10 border-amber-700/30",
+];
+const RANK_LABEL = ["1º", "2º", "3º"];
 
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
@@ -51,10 +58,28 @@ function Dashboard() {
     [resultados, taf, chamada, militares],
   );
 
+  // Filtra militares pelo pelotão selecionado (via URL search param)
+  const filteredMilitares = useMemo(
+    () =>
+      !pelotao
+        ? militares
+        : militares.filter((m) => m.pelotao === pelotao),
+    [militares, pelotao],
+  );
+
+  // Resultados apenas do pelotão selecionado
+  const filteredResults = useMemo(
+    () =>
+      resultsForEdicao.filter((r) =>
+        filteredMilitares.some((m) => m.id === r.militar_id),
+      ),
+    [resultsForEdicao, filteredMilitares],
+  );
+
   const byPosto = useMemo(() => {
     return POSTOS.map((p) => {
-      const list = militares.filter((m) => m.posto === p.value);
-      const results = resultsForEdicao.filter((r) =>
+      const list = filteredMilitares.filter((m) => m.posto === p.value);
+      const results = filteredResults.filter((r) =>
         list.some((m) => m.id === r.militar_id),
       );
       const mm = mencaoMedia(results.map((r) => r.mencao));
@@ -69,39 +94,38 @@ function Dashboard() {
         insuf,
       };
     });
-  }, [militares, resultsForEdicao]);
+  }, [filteredMilitares, filteredResults]);
 
-  const MENCAO_SCORE_LOCAL: Record<string, number> = {
-    E: 5, EXCELENTE: 5, MB: 4, "MUITO BOM": 4, B: 3, BOM: 3,
-    R: 2, REGULAR: 2, SUF: 2, I: 1, INSUF: 1, INSUFICIENTE: 1,
-  };
+  // Top 3 Cabos e Soldados — média das notas de todos os exercícios
+  const top3 = useMemo(() => {
+    const cabosESoldados = filteredMilitares.filter(
+      (m) => m.posto === "cabo" || m.posto === "soldado",
+    );
+    return cabosESoldados
+      .map((militar) => {
+        const r = filteredResults.find((x) => x.militar_id === militar.id);
+        if (!r) return null;
+        const notas = [r.nota_corrida, r.nota_flexao, r.nota_abdominal, r.nota_barra].filter(
+          (n): n is number => n != null,
+        );
+        if (!notas.length) return null;
+        const media = notas.reduce((a, b) => a + b, 0) / notas.length;
+        return { militar, r, media };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+      .sort((a, b) => b.media - a.media)
+      .slice(0, 3);
+  }, [filteredResults, filteredMilitares]);
 
-  const topDestaques = useMemo(() => {
-    const alvos: Posto[] = ["cabo", "soldado", "recruta"];
-    return alvos.map((p) => {
-      const items = resultsForEdicao
-        .map((r) => {
-          const m = militares.find((x) => x.id === r.militar_id);
-          if (!m || m.posto !== p) return null;
-          const key = (r.mencao ?? "").trim().toUpperCase();
-          const score = MENCAO_SCORE_LOCAL[key] ?? 0;
-          return { militar: m, resultado: r, score };
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null && x.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
-      return { posto: p, label: POSTOS.find((x) => x.value === p)?.plural ?? p, items };
-    });
-  }, [resultsForEdicao, militares]);
+  const hasTop3 = top3.length > 0;
 
-  const totalMilitares = militares.length;
-  const totalRealizados = resultsForEdicao.length;
-  const totalInsuf = resultsForEdicao.filter((r) => isInsuf(r.mencao)).length;
+  const totalMilitares = filteredMilitares.length;
+  const totalRealizados = filteredResults.length;
+  const totalInsuf = filteredResults.filter((r) => isInsuf(r.mencao)).length;
   const mencaoGeral = useMemo(
-    () => mencaoMedia(resultsForEdicao.map((r) => r.mencao)),
-    [resultsForEdicao],
+    () => mencaoMedia(filteredResults.map((r) => r.mencao)),
+    [filteredResults],
   );
-
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -123,12 +147,6 @@ function Dashboard() {
               <Link to="/militares">Gerenciar militares</Link>
             </Button>
           )}
-          {isAdmin && (
-            <Button asChild variant="outline">
-              <Link to="/importar">Importar planilha</Link>
-            </Button>
-          )}
-
           {isAvaliador && (
             <Button asChild>
               <Link to="/registros">Registrar TAF</Link>
@@ -142,6 +160,7 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* TAF e Chamada */}
       <div className="flex flex-wrap gap-4">
         <Tabs value={String(taf)} onValueChange={(v) => setTaf(Number(v))}>
           <TabsList>
@@ -199,6 +218,95 @@ function Dashboard() {
         />
       </div>
 
+      {/* ── Top 3 Cabos e Soldados ───────────────────────────────── */}
+      {(hasTop3 || loading) && (
+        <Card className="border-border/70">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="font-display text-lg tracking-wide text-primary">
+                Top 3 — Cabos e Soldados
+              </CardTitle>
+              <span className="ml-1 text-xs text-muted-foreground">
+                {taf}º TAF · {chamada}ª Chamada
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : top3.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Sem resultados de Cabos/Soldados nesta edição.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {top3.map(({ militar, r, media }, idx) => (
+                  <div
+                    key={militar.id}
+                    className={`flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
+                  >
+                    {/* Posição */}
+                    <span className={`w-7 shrink-0 text-center text-lg font-bold ${MEDAL_COLORS[idx]}`}>
+                      {RANK_LABEL[idx]}
+                    </span>
+
+                    {/* Nome e posto */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium leading-tight">
+                        {militar.nome_guerra ?? militar.nome}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {militar.posto}
+                      </p>
+                    </div>
+
+                    {/* Índices numéricos por exercício */}
+                    <div className="flex flex-wrap gap-3 text-center">
+                      {[
+                        { label: "Corrida", value: r.corrida_metros, unit: "m" },
+                        { label: "Flexão", value: r.flexao, unit: "rep" },
+                        { label: "Abdom.", value: r.abdominal, unit: "rep" },
+                        { label: "Barra", value: r.barra, unit: "rep" },
+                      ].map(({ label, value, unit }) => (
+                        <div key={label} className="min-w-[52px]">
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            {label}
+                          </p>
+                          <p className="font-display text-base text-primary">
+                            {value ?? "—"}
+                            {value != null && (
+                              <span className="ml-0.5 text-[10px] text-muted-foreground">
+                                {unit}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Média das notas */}
+                    <div className="ml-auto text-right">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Média
+                      </p>
+                      <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>
+                        {media.toFixed(1)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Cards por posto ───────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {loading &&
           Array.from({ length: 5 }).map((_, i) => (
@@ -273,68 +381,7 @@ function Dashboard() {
         )}
       </div>
 
-      {topDestaques.some((d) => d.items.length > 0) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-gold" />
-              <CardTitle className="font-display text-lg tracking-wide text-primary">
-                Top 3 desempenhos físicos
-              </CardTitle>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Melhores menções entre Cabos, Soldados e Recrutas nesta edição.
-            </p>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            {topDestaques.map((grp) => (
-              <div
-                key={grp.posto}
-                className="rounded-md border border-border bg-muted/30 p-3"
-              >
-                <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                  {grp.label}
-                </div>
-                {grp.items.length === 0 && (
-                  <p className="py-4 text-center text-xs text-muted-foreground">
-                    Sem registros nesta edição.
-                  </p>
-                )}
-                <ol className="space-y-2">
-                  {grp.items.map((it, idx) => {
-                    const medal =
-                      idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉";
-                    return (
-                      <li
-                        key={it.resultado.id}
-                        className="flex items-center gap-2 rounded-sm border border-border/60 bg-background p-2"
-                      >
-                        <span className="text-xl leading-none">{medal}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">
-                            {it.militar.nome_guerra ?? it.militar.nome}
-                          </div>
-                          <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
-                            {it.militar.nome}
-                          </div>
-                        </div>
-                        <span
-                          className={`inline-block rounded border px-2 py-0.5 font-display text-sm ${mencaoColor(it.resultado.mencao)}`}
-                        >
-                          {it.resultado.mencao ?? "—"}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-
-      {resultsForEdicao.length > 0 && (
+      {filteredResults.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="font-display text-lg tracking-wide text-primary">
@@ -353,8 +400,8 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {resultsForEdicao.map((r) => {
-                  const m = militares.find((x) => x.id === r.militar_id);
+                {filteredResults.map((r) => {
+                  const m = filteredMilitares.find((x) => x.id === r.militar_id);
                   const p = POSTOS.find((x) => x.value === m?.posto);
                   return (
                     <tr key={r.id} className="border-b border-border/50">

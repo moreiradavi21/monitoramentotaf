@@ -16,11 +16,12 @@ export const postoPlural = (p: Posto) =>
 
 export const PELOTOES = [
   { value: "comunicacoes", label: "Pel Comunicações" },
-  { value: "morteiro",     label: "Pel Morteiro" },
-  { value: "anticarro",   label: "Pel Anticarro" },
-  { value: "saude",       label: "Pel Saúde" },
-  { value: "enc_mat",     label: "ENC MAT" },
-  { value: "sec_cmd",     label: "Seção CMD" },
+  { value: "morteiro", label: "Pel Morteiro" },
+  { value: "anticarro", label: "Pel Anticarro" },
+  { value: "saude", label: "Pel Saúde" },
+  { value: "aprove", label: "Pel Aprove" },
+  { value: "enc_mat", label: "ENC MAT" },
+  { value: "sec_cmd", label: "Seção CMD" },
 ] as const;
 
 export type Pelotao = (typeof PELOTOES)[number]["value"];
