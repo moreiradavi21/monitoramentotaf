@@ -66,26 +66,17 @@ function Dashboard() {
     });
   }, [militares, resultsForEdicao]);
 
-  // Top 3 Cabos e Soldados — média das notas de todos os exercícios
-  const top3 = useMemo(() => {
-    const cabosESoldados = militares.filter(
-      (m) => m.posto === "cabo" || m.posto === "soldado",
-    );
-    return cabosESoldados
-      .map((militar) => {
-        const r = resultsForEdicao.find((x) => x.militar_id === militar.id);
-        if (!r) return null;
-        const notas = [r.nota_corrida, r.nota_flexao, r.nota_abdominal, r.nota_barra].filter(
-          (n): n is number => n != null,
-        );
-        if (!notas.length) return null;
-        const media = notas.reduce((a, b) => a + b, 0) / notas.length;
-        return { militar, r, media };
-      })
-      .filter((x): x is NonNullable<typeof x> => x !== null)
-      .sort((a, b) => b.media - a.media)
-      .slice(0, 3);
-  }, [resultsForEdicao, militares]);
+  // Top 3 por categoria — média das notas de todos os exercícios
+  const top3CabosSoldados = useMemo(
+    () => calcularTop3(militares, resultsForEdicao, ["cabo", "soldado"]),
+    [militares, resultsForEdicao],
+  );
+  const top3Recrutas = useMemo(
+    () => calcularTop3(militares, resultsForEdicao, ["recruta"]),
+    [militares, resultsForEdicao],
+  );
+
+  const hasTop3 = top3CabosSoldados.length > 0 || top3Recrutas.length > 0;
 
   const totalMilitares = militares.length;
   const totalRealizados = resultsForEdicao.length;
@@ -176,76 +167,29 @@ function Dashboard() {
         />
       </div>
 
-      {/* Top 3 Cabos e Soldados */}
-      <Card className="border-border/70">
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-yellow-500" />
-            <CardTitle className="font-display text-lg tracking-wide text-primary">
-              Top 3 — Cabos e Soldados
-            </CardTitle>
-            <span className="ml-1 text-xs text-muted-foreground">
-              {taf}º TAF · {chamada}ª Chamada
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : top3.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Sem resultados de Cabos/Soldados nesta edição.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {top3.map(({ militar, r, media }, idx) => (
-                <div
-                  key={militar.id}
-                  className={`flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
-                >
-                  <span className={`w-7 shrink-0 text-center text-lg font-bold ${MEDAL_COLORS[idx]}`}>
-                    {RANK_LABEL[idx]}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium leading-tight">
-                      {militar.nome_guerra ?? militar.nome}
-                    </p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                      {militar.posto}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-center">
-                    {[
-                      { label: "Corrida", value: r.corrida_metros, unit: "m" },
-                      { label: "Flexão", value: r.flexao, unit: "rep" },
-                      { label: "Abdom.", value: r.abdominal, unit: "rep" },
-                      { label: "Barra", value: r.barra, unit: "rep" },
-                    ].map(({ label, value, unit }) => (
-                      <div key={label} className="min-w-[52px]">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-                        <p className="font-display text-base text-primary">
-                          {value ?? "—"}
-                          {value != null && (
-                            <span className="ml-0.5 text-[10px] text-muted-foreground">{unit}</span>
-                          )}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="ml-auto text-right">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Média</p>
-                    <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>{media.toFixed(1)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Top 3 */}
+      {hasTop3 || loading ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Top3Card
+            title="Top 3 — Cabos e Soldados"
+            postos={["cabo", "soldado"]}
+            militares={militares}
+            resultados={resultsForEdicao}
+            taf={taf}
+            chamada={chamada}
+            loading={loading}
+          />
+          <Top3Card
+            title="Top 3 — Recrutas"
+            postos={["recruta"]}
+            militares={militares}
+            resultados={resultsForEdicao}
+            taf={taf}
+            chamada={chamada}
+            loading={loading}
+          />
+        </div>
+      ) : null}
 
       {/* Cards por posto */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
