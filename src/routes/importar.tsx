@@ -279,7 +279,9 @@ function ImportarPage() {
         .map((m) => m.id);
 
       if (inserts.length) {
-        const { error } = await supabase.from("militares").insert(inserts);
+        const { error } = await supabase
+          .from("militares")
+          .upsert(inserts, { onConflict: "nome", ignoreDuplicates: false });
         if (error) throw error;
       }
       for (const u of updates) {
