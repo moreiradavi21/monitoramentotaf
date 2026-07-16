@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -88,6 +89,7 @@ const emptyForm = (): Form => ({
 });
 
 function RegistrosPage() {
+  const queryClient = useQueryClient();
   const { data: militares = [] } = useMilitares();
   const { data: resultados = [], isLoading } = useResultados();
   const { isAdmin, user } = useAuth();
@@ -240,10 +242,10 @@ function RegistrosPage() {
     [militares],
   );
 
-  // Avaliadores vêem apenas seus próprios registros; admin vê todos
+  // Avaliadores vêem seus próprios registros e os sem avaliador atribuído; admin vê todos
   const resultadosPorPapel = useMemo(() => {
     if (isAdmin) return resultados;
-    return resultados.filter((r) => r.avaliador_id === user?.id);
+    return resultados.filter((r) => r.avaliador_id === user?.id || r.avaliador_id === null);
   }, [resultados, isAdmin, user?.id]);
 
   const filtrados = useMemo(() => {
@@ -656,6 +658,8 @@ function RegistrosPage() {
                       setNovoMilitarOpen(false);
                       setMilitarSearch("");
                       if (created?.id) {
+                        // Aguarda o refetch para garantir que o novo militar esteja no array
+                        await queryClient.refetchQueries({ queryKey: ["militares"] });
                         // Abre o formulário de TAF já com o novo militar selecionado
                         setForm({ ...emptyForm(), militar_id: created.id });
                         setOpen(true);
