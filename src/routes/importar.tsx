@@ -228,14 +228,20 @@ function ImportarPage() {
     if (!todasLinhas.length) return;
     setSaving(true);
     try {
+      // Pelotões presentes na planilha (só esses serão sincronizados)
+      const pelotoesImportados = [...new Set(grupos.map((g) => g.pelotao))];
+
+      // Busca militares existentes apenas dos pelotões importados
       const { data: existentes, error: e0 } = await supabase
         .from("militares")
-        .select("id,nome");
+        .select("id,nome,pelotao")
+        .in("pelotao", pelotoesImportados);
       if (e0) throw e0;
 
       const byNome = new Map<string, string>();
       for (const m of existentes ?? []) byNome.set(m.nome.toUpperCase().trim(), m.id);
 
+      const nomesNaPlanilha = new Set(todasLinhas.map((l) => l.nome.toUpperCase().trim()));
       const inserts: any[] = [];
       const updates: { id: string; payload: any }[] = [];
 
@@ -247,10 +253,15 @@ function ImportarPage() {
           data_nascimento: l.data_nascimento,
           pelotao: l.pelotao,
         };
-        const id = byNome.get(l.nome);
+        const id = byNome.get(l.nome.toUpperCase().trim());
         if (id) updates.push({ id, payload });
         else inserts.push(payload);
       }
+
+      // Remove militares dos pelotões importados que não estão na planilha
+      const idsParaRemover = (existentes ?? [])
+        .filter((m) => !nomesNaPlanilha.has(m.nome.toUpperCase().trim()))
+        .map((m) => m.id);
 
       if (inserts.length) {
         const { error } = await supabase.from("militares").insert(inserts);
@@ -263,10 +274,19 @@ function ImportarPage() {
           .eq("id", u.id);
         if (error) throw error;
       }
+      if (idsParaRemover.length) {
+        const { error } = await supabase
+          .from("militares")
+          .delete()
+          .in("id", idsParaRemover);
+        if (error) throw error;
+      }
 
       setResult({ criados: inserts.length, atualizados: updates.length });
       qc.invalidateQueries({ queryKey: ["militares"] });
-      toast.success(`Concluído — ${inserts.length} criados, ${updates.length} atualizados.`);
+      toast.success(
+        `Concluído — ${inserts.length} criados, ${updates.length} atualizados, ${idsParaRemover.length} removidos.`
+      );
     } catch (e: any) {
       toast.error("Erro ao salvar: " + (e?.message ?? ""));
     } finally {

@@ -148,20 +148,25 @@ function ImportDialog() {
     if (!all.length) return;
     setSaving(true);
     try {
-      const { data: ex, error: e0 } = await supabase.from("militares").select("id,nome");
+      // Pelotões presentes na planilha (só esses são sincronizados)
+      const pelotoesImportados = [...new Set(grupos.map(g=>g.pelotao))];
+      const { data: ex, error: e0 } = await supabase.from("militares").select("id,nome,pelotao").in("pelotao", pelotoesImportados);
       if (e0) throw e0;
       const byNome = new Map((ex??[]).map(m=>[m.nome.toUpperCase().trim(), m.id]));
+      const nomesNaPlanilha = new Set(all.map(l=>l.nome.toUpperCase().trim()));
       const inserts: any[]=[], updates: {id:string;payload:any}[]=[];
       for (const l of all) {
         const payload = { nome:l.nome, nome_guerra:l.nome_guerra, posto:l.posto, data_nascimento:l.data_nascimento, pelotao:l.pelotao };
-        const id = byNome.get(l.nome);
+        const id = byNome.get(l.nome.toUpperCase().trim());
         if (id) updates.push({id, payload}); else inserts.push(payload);
       }
+      const idsRemover = (ex??[]).filter(m=>!nomesNaPlanilha.has(m.nome.toUpperCase().trim())).map(m=>m.id);
       if (inserts.length) { const {error}=await supabase.from("militares").insert(inserts); if(error) throw error; }
       for (const u of updates) { const {error}=await supabase.from("militares").update(u.payload).eq("id",u.id); if(error) throw error; }
+      if (idsRemover.length) { const {error}=await supabase.from("militares").delete().in("id",idsRemover); if(error) throw error; }
       setResult({criados:inserts.length, atualizados:updates.length});
       qc.invalidateQueries({queryKey:["militares"]});
-      toast.success(`${inserts.length} criados, ${updates.length} atualizados.`);
+      toast.success(`${inserts.length} criados, ${updates.length} atualizados, ${idsRemover.length} removidos.`);
     } catch(e:any) { toast.error("Erro: "+(e?.message??"")); }
     finally { setSaving(false); }
   }
