@@ -247,16 +247,19 @@ function ImportarPage() {
         .select("id,nome,pelotao");
       if (e0) throw e0;
 
-      // byNome: mapa global nome → id (para detectar duplicatas em qualquer pelotão)
+      // Normalização compatível com o índice único do banco: lower(nome) + espaços colapsados
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+
+      // byNome: mapa global nome normalizado → id
       const byNome = new Map<string, string>();
-      for (const m of todos ?? []) byNome.set(m.nome.toUpperCase().trim(), m.id);
+      for (const m of todos ?? []) byNome.set(norm(m.nome), m.id);
 
       // existentesNoPelotao: apenas dos pelotões importados (para a lógica de remoção)
       const existentesNoPelotao = (todos ?? []).filter((m) =>
         m.pelotao ? pelotoesImportados.includes(m.pelotao) : false
       );
 
-      const nomesNaPlanilha = new Set(todasLinhas.map((l) => l.nome.toUpperCase().trim()));
+      const nomesNaPlanilha = new Set(todasLinhas.map((l) => norm(l.nome)));
       const inserts: any[] = [];
       const updates: { id: string; payload: any }[] = [];
 
@@ -268,20 +271,18 @@ function ImportarPage() {
           data_nascimento: l.data_nascimento,
           pelotao: l.pelotao,
         };
-        const id = byNome.get(l.nome.toUpperCase().trim());
+        const id = byNome.get(norm(l.nome));
         if (id) updates.push({ id, payload });
         else inserts.push(payload);
       }
 
       // Remove militares dos pelotões importados que não estão na planilha
       const idsParaRemover = existentesNoPelotao
-        .filter((m) => !nomesNaPlanilha.has(m.nome.toUpperCase().trim()))
+        .filter((m) => !nomesNaPlanilha.has(norm(m.nome)))
         .map((m) => m.id);
 
       if (inserts.length) {
-        const { error } = await supabase
-          .from("militares")
-          .upsert(inserts, { onConflict: "nome", ignoreDuplicates: false });
+        const { error } = await supabase.from("militares").insert(inserts);
         if (error) throw error;
       }
       for (const u of updates) {
