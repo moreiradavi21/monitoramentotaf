@@ -13,9 +13,6 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    pelotao: typeof search.pelotao === "string" ? search.pelotao : undefined,
-  }),
   component: Dashboard,
 });
 
@@ -36,50 +33,26 @@ const RANK_LABEL = ["1º", "2º", "3º"];
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
-  const { pelotao } = Route.useSearch();
   const { isAdmin, isAvaliador, isCompanhia } = useAuth();
   const militaresQ = useMilitares();
   const resQ = useResultados();
 
   const loading = militaresQ.isLoading || resQ.isLoading;
-  const allMilitares = militaresQ.data ?? [];
+  const militares = militaresQ.data ?? [];
   const resultados = resQ.data ?? [];
 
-  // Filtra militares pelo pelotão selecionado via URL (?pelotao=xxx)
-  const militares = useMemo(
-    () => pelotao ? allMilitares.filter((m) => m.pelotao === pelotao) : allMilitares,
-    [allMilitares, pelotao],
-  );
-
   const resultsForEdicao = useMemo(
-    () => resultados
-      .filter((r) => r.taf_numero === taf && r.chamada === chamada)
-      .filter((r) => militares.some((m) => m.id === r.militar_id)),
-    [resultados, taf, chamada, militares],
-  );
-
-  // Filtra militares pelo pelotão selecionado (via URL search param)
-  const filteredMilitares = useMemo(
     () =>
-      !pelotao
-        ? militares
-        : militares.filter((m) => m.pelotao === pelotao),
-    [militares, pelotao],
-  );
-
-  // Resultados apenas do pelotão selecionado
-  const filteredResults = useMemo(
-    () =>
-      resultsForEdicao.filter((r) =>
-        filteredMilitares.some((m) => m.id === r.militar_id),
+      resultados.filter(
+        (r) => r.taf_numero === taf && r.chamada === chamada,
       ),
-    [resultsForEdicao, filteredMilitares],
+    [resultados, taf, chamada],
   );
 
   const byPosto = useMemo(() => {
     return POSTOS.map((p) => {
-      const list = filteredMilitares.filter((m) => m.posto === p.value);
-      const results = filteredResults.filter((r) =>
+      const list = militares.filter((m) => m.posto === p.value);
+      const results = resultsForEdicao.filter((r) =>
         list.some((m) => m.id === r.militar_id),
       );
       const mm = mencaoMedia(results.map((r) => r.mencao));
@@ -94,16 +67,16 @@ function Dashboard() {
         insuf,
       };
     });
-  }, [filteredMilitares, filteredResults]);
+  }, [militares, resultsForEdicao]);
 
   // Top 3 Cabos e Soldados — média das notas de todos os exercícios
   const top3 = useMemo(() => {
-    const cabosESoldados = filteredMilitares.filter(
+    const cabosESoldados = militares.filter(
       (m) => m.posto === "cabo" || m.posto === "soldado",
     );
     return cabosESoldados
       .map((militar) => {
-        const r = filteredResults.find((x) => x.militar_id === militar.id);
+        const r = resultsForEdicao.find((x) => x.militar_id === militar.id);
         if (!r) return null;
         const notas = [r.nota_corrida, r.nota_flexao, r.nota_abdominal, r.nota_barra].filter(
           (n): n is number => n != null,
@@ -115,16 +88,16 @@ function Dashboard() {
       .filter((x): x is NonNullable<typeof x> => x !== null)
       .sort((a, b) => b.media - a.media)
       .slice(0, 3);
-  }, [filteredResults, filteredMilitares]);
+  }, [resultsForEdicao, militares]);
 
   const hasTop3 = top3.length > 0;
 
-  const totalMilitares = filteredMilitares.length;
-  const totalRealizados = filteredResults.length;
-  const totalInsuf = filteredResults.filter((r) => isInsuf(r.mencao)).length;
+  const totalMilitares = militares.length;
+  const totalRealizados = resultsForEdicao.length;
+  const totalInsuf = resultsForEdicao.filter((r) => isInsuf(r.mencao)).length;
   const mencaoGeral = useMemo(
-    () => mencaoMedia(filteredResults.map((r) => r.mencao)),
-    [filteredResults],
+    () => mencaoMedia(resultsForEdicao.map((r) => r.mencao)),
+    [resultsForEdicao],
   );
 
   return (
@@ -381,7 +354,7 @@ function Dashboard() {
         )}
       </div>
 
-      {filteredResults.length > 0 && (
+      {resultsForEdicao.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="font-display text-lg tracking-wide text-primary">
@@ -400,8 +373,8 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredResults.map((r) => {
-                  const m = filteredMilitares.find((x) => x.id === r.militar_id);
+                {resultsForEdicao.map((r) => {
+                  const m = militares.find((x) => x.id === r.militar_id);
                   const p = POSTOS.find((x) => x.value === m?.posto);
                   return (
                     <tr key={r.id} className="border-b border-border/50">

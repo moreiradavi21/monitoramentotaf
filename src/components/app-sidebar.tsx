@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   UserCheck,
   Shield,
+  FileSpreadsheet,
 } from "lucide-react";
 import { PELOTOES } from "@/lib/taf";
 
@@ -29,10 +30,7 @@ import { useAuth } from "@/lib/auth";
  */
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const searchStr = useRouterState({ select: (r) => r.location.searchStr });
   const { isAdmin, approved } = useAuth();
-  const activePelotao =
-    new URLSearchParams(searchStr).get("pelotao") ?? "todos";
 
   // Sidebar exclusiva para admin; non-admin nunca vê a barra lateral
   if (!isAdmin || !approved) return null;
@@ -45,6 +43,7 @@ export function AppSidebar() {
     { title: "Militares", url: "/militares", icon: Users },
     { title: "Registros", url: "/registros", icon: ClipboardList },
     { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
+    { title: "Importar Planilha", url: "/importar", icon: FileSpreadsheet },
   ];
 
   return (
@@ -91,11 +90,11 @@ export function AppSidebar() {
                 <SidebarMenuItem key={p.value}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === "/" && activePelotao === p.value}
+                    isActive={pathname === `/pelotao/${p.value}`}
                   >
                     <Link
-                      to="/"
-                      search={{ pelotao: p.value }}
+                      to="/pelotao/$pelotaoId"
+                      params={{ pelotaoId: p.value }}
                       className="flex items-center gap-2"
                     >
                       <Shield className="h-4 w-4" />

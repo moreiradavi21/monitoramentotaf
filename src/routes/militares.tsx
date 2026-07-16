@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Pencil, Trash2, UserPlus, Search } from "lucide-react";
+import { useMemo, useState, useRef, useCallback } from "react";
+import { Pencil, Trash2, UserPlus, Search, FileSpreadsheet, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,15 +35,225 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-import { POSTOS, PELOTOES, postoLabel, type Posto } from "@/lib/taf";
+import { POSTOS, PELOTOES, pelotaoLabel, postoLabel, type Posto } from "@/lib/taf";
 import {
   useDeleteMilitar,
   useMilitares,
   useSaveMilitar,
   type Militar,
 } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { RequireAdmin } from "@/components/require-admin";
+
+// ── Importação inline ─────────────────────────────────────────────────────
+
+const SHEET_MAP: Record<string, string> = {
+  "saude": "saude", "saúde": "saude", "pel saude": "saude", "pel saúde": "saude",
+  "pel com": "comunicacoes", "comunicacoes": "comunicacoes", "comunicações": "comunicacoes",
+  "morteiro": "morteiro", "pel morteiro": "morteiro",
+  "anticarro": "anticarro", "pel anticarro": "anticarro",
+  "aprov": "aprove", "aprove": "aprove",
+  "enc mat": "enc_mat", "enc. mat": "enc_mat",
+  "seç cmd": "sec_cmd", "sec cmd": "sec_cmd", "seção cmd": "sec_cmd",
+};
+
+type PostoVal = "oficial" | "sargento" | "cabo" | "soldado" | "recruta";
+type LinhaImport = { nome: string; nome_guerra: string | null; posto: PostoVal; data_nascimento: string | null; pelotao: string };
+type GrupoImport = { pelotao: string; sheetName: string; count: number; linhas: LinhaImport[] };
+
+function normKey(s: string) {
+  return s.toLowerCase().trim().replace(/[áàãâä]/g,"a").replace(/[éèêë]/g,"e").replace(/[íìîï]/g,"i").replace(/[óòõôö]/g,"o").replace(/[úùûü]/g,"u").replace(/ç/g,"c");
+}
+function getCol(map: Record<string,any>, ...keys: string[]): string {
+  for (const k of keys) { const v = map[k]; if (v != null && String(v).trim()) return String(v).trim(); }
+  return "";
+}
+function parsePosto(raw: string): PostoVal {
+  const s = raw.toUpperCase().trim().replace(/[°ºª.]/g,"").replace(/\s+/g," ");
+  if (/CAP|TEN|OFIC|BGD|CEL|COR|MAJ|GEN/.test(s)) return "oficial";
+  if (/SGT|SARG|SUBTEN|^ST /.test(s)) return "sargento";
+  if (/^CB |^CABO/.test(s)) return "cabo";
+  if (/RCT|RECR|EV$/.test(s)) return "recruta";
+  return "soldado";
+}
+function parseDate(v: any): string | null {
+  if (!v) return null;
+  if (v instanceof Date) return v.toISOString().slice(0,10);
+  if (typeof v === "number") { const d = XLSX.SSF.parse_date_code(v); if (d) return `${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`; }
+  const s = String(v).trim();
+  const br = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (br) { let [,d,m,y]=br; if(y.length===2)y=(Number(y)>30?"19":"20")+y; return `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`; }
+  return null;
+}
+
+function parseXlsx(file: File): Promise<GrupoImport[]> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target?.result, { type: "array", cellDates: true });
+        const grupos: GrupoImport[] = [];
+        for (const sheetName of wb.SheetNames) {
+          const pelotao = SHEET_MAP[sheetName.toLowerCase().trim()];
+          if (!pelotao) continue;
+          const ws = wb.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json<any>(ws, { defval: "", raw: false });
+          const jsonRaw = XLSX.utils.sheet_to_json<any>(ws, { defval: "", raw: true });
+          const linhas: LinhaImport[] = [];
+          json.forEach((r: any, i: number) => {
+            const map: Record<string,any> = {}; for (const k of Object.keys(r)) map[normKey(k)] = r[k];
+            const mapR: Record<string,any> = {}; const rr = jsonRaw[i]??{}; for (const k of Object.keys(rr)) mapR[normKey(k)] = rr[k];
+            const nome = getCol(map,"nome completo","nome","militar");
+            if (!nome || nome.length < 3) return;
+            const dnKey = Object.keys(mapR).find(k=>k.includes("nasc")||k.includes("data"));
+            linhas.push({ nome: nome.toUpperCase(), nome_guerra: getCol(map,"nome de guerra","guerra","ng")||null, posto: parsePosto(getCol(map,"posto","graduacao")||"SD"), data_nascimento: parseDate(dnKey?mapR[dnKey]:null), pelotao });
+          });
+          if (linhas.length) grupos.push({ pelotao, sheetName, count: linhas.length, linhas });
+        }
+        resolve(grupos);
+      } catch (e: any) { reject(e); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function ImportDialog() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [grupos, setGrupos] = useState<GrupoImport[]>([]);
+  const [fileName, setFileName] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<{criados:number;atualizados:number}|null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(file: File) {
+    if (!/\.(xlsx|xls|ods)$/i.test(file.name)) { toast.error("Selecione .xlsx, .xls ou .ods."); return; }
+    setParsing(true); setGrupos([]); setResult(null); setFileName(file.name);
+    try {
+      const g = await parseXlsx(file);
+      if (!g.length) { toast.error("Nenhuma aba reconhecida. Use: Pel Com, Morteiro, Anticarro, Saúde, APROV, Enc Mat, Seç Cmd."); return; }
+      setGrupos(g);
+      const total = g.reduce((s,x)=>s+x.count,0);
+      toast.success(`${total} militares em ${g.length} pelotão(ões) detectados.`);
+    } catch(e:any) { toast.error("Erro ao ler: "+(e?.message??"")); }
+    finally { setParsing(false); }
+  }
+
+  async function salvar() {
+    const all = grupos.flatMap(g=>g.linhas);
+    if (!all.length) return;
+    setSaving(true);
+    try {
+      const { data: ex, error: e0 } = await supabase.from("militares").select("id,nome");
+      if (e0) throw e0;
+      const byNome = new Map((ex??[]).map(m=>[m.nome.toUpperCase().trim(), m.id]));
+      const inserts: any[]=[], updates: {id:string;payload:any}[]=[];
+      for (const l of all) {
+        const payload = { nome:l.nome, nome_guerra:l.nome_guerra, posto:l.posto, data_nascimento:l.data_nascimento, pelotao:l.pelotao };
+        const id = byNome.get(l.nome);
+        if (id) updates.push({id, payload}); else inserts.push(payload);
+      }
+      if (inserts.length) { const {error}=await supabase.from("militares").insert(inserts); if(error) throw error; }
+      for (const u of updates) { const {error}=await supabase.from("militares").update(u.payload).eq("id",u.id); if(error) throw error; }
+      setResult({criados:inserts.length, atualizados:updates.length});
+      qc.invalidateQueries({queryKey:["militares"]});
+      toast.success(`${inserts.length} criados, ${updates.length} atualizados.`);
+    } catch(e:any) { toast.error("Erro: "+(e?.message??"")); }
+    finally { setSaving(false); }
+  }
+
+  function resetDialog() { setGrupos([]); setFileName(""); setResult(null); }
+
+  const total = grupos.reduce((s,g)=>s+g.count,0);
+
+  return (
+    <Dialog open={open} onOpenChange={(o)=>{ setOpen(o); if(!o) resetDialog(); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Importar planilha
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display tracking-wide">Importar planilha de efetivo</DialogTitle>
+        </DialogHeader>
+
+        {/* Upload */}
+        {!grupos.length && !parsing && (
+          <div
+            className="flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-border py-10 transition-colors hover:border-primary/50 hover:bg-muted/20"
+            onClick={()=>fileRef.current?.click()}
+          >
+            <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
+            <div className="text-center">
+              <p className="text-sm font-medium">Clique para selecionar a planilha</p>
+              <p className="text-xs text-muted-foreground">.xlsx, .xls ou .ods · Uma aba por pelotão</p>
+            </div>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.ods" className="hidden"
+              onChange={(e)=>{ const f=e.target.files?.[0]; if(f) handleFile(f); e.target.value=""; }} />
+          </div>
+        )}
+
+        {parsing && (
+          <div className="flex items-center justify-center gap-3 py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Lendo planilha…</span>
+          </div>
+        )}
+
+        {/* Preview grupos */}
+        {grupos.length > 0 && !result && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{fileName}</span> · {total} militares em {grupos.length} pelotão(ões)
+            </p>
+            <div className="divide-y divide-border rounded-md border">
+              {grupos.map((g) => (
+                <div key={g.pelotao} className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-medium">{pelotaoLabel(g.pelotao)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">aba: {g.sheetName}</span>
+                    <Badge variant="secondary">{g.count}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Resultado */}
+        {result && (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <CheckCircle2 className="h-8 w-8 text-green-500" />
+            <div>
+              <p className="font-medium">Importação concluída</p>
+              <p className="text-sm text-muted-foreground">
+                {result.criados} criados · {result.atualizados} atualizados
+              </p>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          {grupos.length > 0 && !result && (
+            <>
+              <Button variant="outline" onClick={resetDialog} disabled={saving}>Trocar arquivo</Button>
+              <Button onClick={salvar} disabled={saving}>
+                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Salvando…</> : <><Upload className="mr-2 h-4 w-4"/>Importar {total} militares</>}
+              </Button>
+            </>
+          )}
+          {result && <Button onClick={()=>setOpen(false)}>Fechar</Button>}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export const Route = createFileRoute("/militares")({
   component: () => (
@@ -154,7 +365,9 @@ function MilitaresPage() {
             Cadastro do efetivo da Companhia CCAP separado por categoria.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex flex-wrap gap-2">
+          <ImportDialog />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openNew}>
               <UserPlus className="mr-2 h-4 w-4" />
@@ -250,6 +463,7 @@ function MilitaresPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card>

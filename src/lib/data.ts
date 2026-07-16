@@ -171,6 +171,67 @@ export function useSaveResultado() {
   });
 }
 
+// ── Importação em lote ──────────────────────────────────────────────────────
+
+export type ImportRow = {
+  nome: string;
+  nome_guerra?: string | null;
+  posto: Posto;
+  data_nascimento?: string | null;
+  identificacao?: string | null;
+  pelotao: string;
+};
+
+export type ImportResult = { created: number; updated: number; skipped: number };
+
+export function useImportMilitares() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: ImportRow[]): Promise<ImportResult> => {
+      const { data: existing, error: fetchErr } = await supabase
+        .from("militares")
+        .select("id, nome");
+      if (fetchErr) throw fetchErr;
+
+      const byNome = new Map(
+        (existing ?? []).map((m) => [m.nome.toLowerCase().trim(), m.id as string]),
+      );
+
+      let created = 0, updated = 0, skipped = 0;
+
+      for (const row of rows) {
+        if (!row.nome.trim()) { skipped++; continue; }
+        const key = row.nome.toLowerCase().trim();
+        const payload = {
+          nome: row.nome.trim(),
+          nome_guerra: row.nome_guerra?.trim() || null,
+          posto: row.posto,
+          data_nascimento: row.data_nascimento || null,
+          identificacao: row.identificacao?.trim() || null,
+          pelotao: row.pelotao,
+        };
+
+        const existingId = byNome.get(key);
+        if (existingId) {
+          const { error } = await supabase
+            .from("militares")
+            .update(payload)
+            .eq("id", existingId);
+          if (error) throw error;
+          updated++;
+        } else {
+          const { error } = await supabase.from("militares").insert(payload);
+          if (error) throw error;
+          created++;
+        }
+      }
+
+      return { created, updated, skipped };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["militares"] }),
+  });
+}
+
 export function useDeleteResultado() {
   const qc = useQueryClient();
   return useMutation({
