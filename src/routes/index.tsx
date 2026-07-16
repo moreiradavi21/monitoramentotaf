@@ -106,7 +106,7 @@ function Top3Card({
           <p className="text-sm text-muted-foreground">Sem resultados nesta edição.</p>
         ) : (
           <div className="space-y-3">
-            {top3.map(({ militar, r, media }, idx) => (
+            {top3.map(({ militar, r, mencoes, media }, idx) => (
               <div
                 key={militar.id}
                 className={`flex flex-col gap-2 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
@@ -125,26 +125,26 @@ function Top3Card({
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Média</p>
-                    <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>{media.toFixed(1)}</p>
+                    <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>{media.score?.toFixed(2)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Menção</p>
-                    <span className={`inline-block rounded border px-2 py-0.5 text-xs ${mencaoColor(r.mencao)}`}>
-                      {r.mencao ?? "—"}
+                    <span className={`inline-block rounded border px-2 py-0.5 text-xs ${mencaoColor(media.short)}`}>
+                      {media.short}
                     </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {[
-                    { label: "Corrida", nota: r.nota_corrida, raw: r.corrida_metros, unit: "m" },
-                    { label: "Flexão", nota: r.nota_flexao, raw: r.flexao, unit: "rep" },
-                    { label: "Abdom.", nota: r.nota_abdominal, raw: r.abdominal, unit: "rep" },
-                    { label: "Barra", nota: r.nota_barra, raw: r.barra, unit: "rep" },
-                  ].map(({ label, nota, raw, unit }) => (
+                    { key: "COR" as ExerKey, label: "Corrida", raw: r.corrida_metros, unit: "m" },
+                    { key: "FLEX" as ExerKey, label: "Flexão", raw: r.flexao, unit: "rep" },
+                    { key: "ABD" as ExerKey, label: "Abdom.", raw: r.abdominal, unit: "rep" },
+                    { key: "BAR" as ExerKey, label: "Barra", raw: r.barra, unit: "rep" },
+                  ].map(({ key, label, raw, unit }) => (
                     <div key={label} className="rounded-md border border-border bg-background p-2 text-center">
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
                       <p className="font-display text-base text-primary">
-                        {nota != null ? nota.toFixed(1) : "—"}
+                        {mencoes[key] !== "—" ? mencoes[key] : "—"}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
                         {raw != null ? `${raw}${unit}` : "—"}
