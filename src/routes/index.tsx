@@ -30,6 +30,133 @@ const MEDAL_BG = [
 ];
 const RANK_LABEL = ["1º", "2º", "3º"];
 
+interface Top3Item {
+  militar: Militar;
+  r: TafResultado;
+  media: number;
+}
+
+function calcularTop3(
+  militares: Militar[],
+  resultados: TafResultado[],
+  postos: Posto[],
+): Top3Item[] {
+  const filtrados = militares.filter((m) => postos.includes(m.posto));
+  return filtrados
+    .map((militar) => {
+      const r = resultados.find((x) => x.militar_id === militar.id);
+      if (!r) return null;
+      const notas = [r.nota_corrida, r.nota_flexao, r.nota_abdominal, r.nota_barra].filter(
+        (n): n is number => n != null,
+      );
+      if (!notas.length) return null;
+      const media = notas.reduce((a, b) => a + b, 0) / notas.length;
+      return { militar, r, media };
+    })
+    .filter((x): x is Top3Item => x !== null)
+    .sort((a, b) => b.media - a.media)
+    .slice(0, 3);
+}
+
+function Top3Card({
+  title,
+  postos,
+  militares,
+  resultados,
+  taf,
+  chamada,
+  loading,
+}: {
+  title: string;
+  postos: Posto[];
+  militares: Militar[];
+  resultados: TafResultado[];
+  taf: number;
+  chamada: number;
+  loading: boolean;
+}) {
+  const top3 = useMemo(
+    () => calcularTop3(militares, resultados, postos),
+    [militares, resultados, postos],
+  );
+
+  return (
+    <Card className="border-border/70">
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-4 w-4 text-yellow-500" />
+          <CardTitle className="font-display text-lg tracking-wide text-primary">{title}</CardTitle>
+          <span className="ml-1 text-xs text-muted-foreground">
+            {taf}º TAF · {chamada}ª Chamada
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+        ) : top3.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sem resultados nesta edição.</p>
+        ) : (
+          <div className="space-y-3">
+            {top3.map(({ militar, r, media }, idx) => (
+              <div
+                key={militar.id}
+                className={`flex flex-col gap-2 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`w-7 shrink-0 text-center text-lg font-bold ${MEDAL_COLORS[idx]}`}>
+                    {RANK_LABEL[idx]}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium leading-tight">
+                      {militar.nome_guerra ?? militar.nome}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {militar.posto}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Média</p>
+                    <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>{media.toFixed(1)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Menção</p>
+                    <span className={`inline-block rounded border px-2 py-0.5 text-xs ${mencaoColor(r.mencao)}`}>
+                      {r.mencao ?? "—"}
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    { label: "Corrida", nota: r.nota_corrida, raw: r.corrida_metros, unit: "m" },
+                    { label: "Flexão", nota: r.nota_flexao, raw: r.flexao, unit: "rep" },
+                    { label: "Abdom.", nota: r.nota_abdominal, raw: r.abdominal, unit: "rep" },
+                    { label: "Barra", nota: r.nota_barra, raw: r.barra, unit: "rep" },
+                  ].map(({ label, nota, raw, unit }) => (
+                    <div key={label} className="rounded-md border border-border bg-background p-2 text-center">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+                      <p className="font-display text-base text-primary">
+                        {nota != null ? nota.toFixed(1) : "—"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {raw != null ? `${raw}${unit}` : "—"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
