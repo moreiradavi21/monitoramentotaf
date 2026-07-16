@@ -34,8 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-import { POSTOS, postoLabel, type Posto } from "@/lib/taf";
-import { useAuth } from "@/lib/auth";
+import { POSTOS, PELOTOES, postoLabel, type Posto } from "@/lib/taf";
 import {
   useDeleteMilitar,
   useMilitares,
@@ -43,18 +42,17 @@ import {
   type Militar,
 } from "@/lib/data";
 
-import { RequireAvaliador } from "@/components/require-admin";
+import { RequireAdmin } from "@/components/require-admin";
 
 export const Route = createFileRoute("/militares")({
   component: () => (
-    <RequireAvaliador>
+    <RequireAdmin>
       <MilitaresPage />
-    </RequireAvaliador>
+    </RequireAdmin>
   ),
 });
 
 function MilitaresPage() {
-  const { isAdmin } = useAuth();
   const { data: militares = [], isLoading } = useMilitares();
   const save = useSaveMilitar();
   const del = useDeleteMilitar();
@@ -68,6 +66,7 @@ function MilitaresPage() {
   const [nome, setNome] = useState("");
   const [nomeGuerra, setNomeGuerra] = useState("");
   const [posto, setPosto] = useState<Posto>("soldado");
+  const [pelotao, setPelotao] = useState<string>("");
   const [ident, setIdent] = useState("");
   const [dataNasc, setDataNasc] = useState("");
 
@@ -76,6 +75,7 @@ function MilitaresPage() {
     setNome("");
     setNomeGuerra("");
     setPosto("soldado");
+    setPelotao("");
     setIdent("");
     setDataNasc("");
     setOpen(true);
@@ -86,6 +86,7 @@ function MilitaresPage() {
     setNome(m.nome);
     setNomeGuerra(m.nome_guerra ?? "");
     setPosto(m.posto);
+    setPelotao(m.pelotao ?? "");
     setIdent(m.identificacao ?? "");
     setDataNasc(m.data_nascimento ?? "");
     setOpen(true);
@@ -102,6 +103,7 @@ function MilitaresPage() {
         nome: nome.trim(),
         nome_guerra: nomeGuerra.trim() || null,
         posto,
+        pelotao: pelotao || null,
         identificacao: ident.trim() || null,
         data_nascimento: dataNasc || null,
       });
@@ -197,6 +199,27 @@ function MilitaresPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Pelotão / Seção</Label>
+                  <Select
+                    value={pelotao || "__none__"}
+                    onValueChange={(v) => setPelotao(v === "__none__" ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— Sem pelotão —</SelectItem>
+                      {PELOTOES.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
                   <Label>Identificação (opcional)</Label>
                   <Input
                     placeholder="Ex.: nº interno"
@@ -204,18 +227,18 @@ function MilitaresPage() {
                     onChange={(e) => setIdent(e.target.value)}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Data de nascimento</Label>
+                  <Input
+                    type="date"
+                    value={dataNasc}
+                    onChange={(e) => setDataNasc(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Data de nascimento</Label>
-                <Input
-                  type="date"
-                  value={dataNasc}
-                  onChange={(e) => setDataNasc(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Usada para calcular automaticamente a menção do TAF por idade.
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                A data de nascimento é usada para calcular automaticamente a menção do TAF por faixa etária.
+              </p>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
@@ -290,7 +313,11 @@ function MilitaresPage() {
                       <div>
                         <div className="font-medium">{m.nome}</div>
                         <div className="text-xs text-muted-foreground">
-                          {m.nome_guerra ? `NG: ${m.nome_guerra}` : m.identificacao ?? "—"}
+                          {m.nome_guerra ? `NG: ${m.nome_guerra}` : ""}
+                          {m.nome_guerra && m.pelotao ? " · " : ""}
+                          {m.pelotao
+                            ? PELOTOES.find((x) => x.value === m.pelotao)?.label ?? m.pelotao
+                            : (!m.nome_guerra && (m.identificacao ?? "—"))}
                         </div>
                       </div>
                       <div className="flex gap-1">
@@ -301,15 +328,13 @@ function MilitaresPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        {isAdmin && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setConfirmDelete(m)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setConfirmDelete(m)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                   ))}
