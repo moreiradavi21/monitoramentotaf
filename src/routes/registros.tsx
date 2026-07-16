@@ -89,6 +89,7 @@ const emptyForm = (): Form => ({
 });
 
 function RegistrosPage() {
+  const queryClient = useQueryClient();
   const { data: militares = [] } = useMilitares();
   const { data: resultados = [], isLoading } = useResultados();
   const { isAdmin, user } = useAuth();
