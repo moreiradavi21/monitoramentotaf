@@ -158,7 +158,7 @@ function ImportDialog() {
       const { data: todos, error: e0 } = await supabase.from("militares").select("id,nome,pelotao");
       if (e0) throw e0;
       const byNome = new Map((todos??[]).map(m=>[m.nome.toUpperCase().trim(), m.id]));
-      const exNoPelotao = (todos??[]).filter(m=>pelotoesImportados.includes(m.pelotao));
+      const exNoPelotao = (todos??[]).filter(m=>m.pelotao ? pelotoesImportados.includes(m.pelotao) : false);
       const nomesNaPlanilha = new Set(all.map(l=>l.nome.toUpperCase().trim()));
       const inserts: any[]=[], updates: {id:string;payload:any}[]=[];
       for (const l of all) {
