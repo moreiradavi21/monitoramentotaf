@@ -10,7 +10,7 @@ git add -A
 
 echo.
 echo === Commit ===
-git commit -m "feat: Sec Cmd Su, PMT, logo Tucandeira, sync completa importacao"
+git commit -m "feat: wizard 2 etapas Registrar TAF, Sec Cmd Su, PMT, logo Tucandeira, sync importacao"
 
 echo.
 echo === Push ===
