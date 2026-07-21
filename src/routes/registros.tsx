@@ -229,7 +229,7 @@ function RegistrosPage() {
   // ── Salvar edição individual ──
   async function salvarEdit() {
     if (!editForm.militar_id) { toast.error("Selecione o militar."); return; }
-    const mencao = editForm.mencao?.trim() || editMencaoFinalAuto ?? null;
+    const mencao = editForm.mencao?.trim() || (editMencaoFinalAuto ?? null);
     const partes: string[] = [];
     (["FLEX", "ABD", "COR", "BAR"] as const).forEach(k => { if (editMencoesAuto[k]) partes.push(`${k}:${editMencoesAuto[k]}`); });
     const obsUser = (editForm.observacoes ?? "").replace(/(FLEX|ABD|COR|BAR)\s*:\s*[A-Za-zÀ-ÿ]+/gi, "").trim();
