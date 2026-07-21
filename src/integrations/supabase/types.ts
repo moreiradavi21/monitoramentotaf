@@ -86,6 +86,13 @@ export type Database = {
             referencedRelation: "militares"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_militar_id_fkey"
+            columns: ["militar_id"]
+            isOneToOne: false
+            referencedRelation: "militares_publicos"
+            referencedColumns: ["id"]
+          },
         ]
       }
       taf_resultados: {
@@ -163,6 +170,13 @@ export type Database = {
             referencedRelation: "militares"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "taf_resultados_militar_id_fkey"
+            columns: ["militar_id"]
+            isOneToOne: false
+            referencedRelation: "militares_publicos"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -188,7 +202,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      militares_publicos: {
+        Row: {
+          id: string | null
+          nome: string | null
+          posto: string | null
+        }
+        Insert: {
+          id?: string | null
+          nome?: string | null
+          posto?: never
+        }
+        Update: {
+          id?: string | null
+          nome?: string | null
+          posto?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_profile: {
@@ -198,23 +229,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_approved: { Args: { _user_id: string }; Returns: boolean }
       marcar_ciente: { Args: { _resultado_id: string }; Returns: undefined }
-      militares_publicos: {
-        Args: never
-        Returns: {
-          id: string
-          nome: string
-          posto: string
-        }[]
-      }
       revoke_profile: { Args: { _profile_id: string }; Returns: undefined }
     }
     Enums: {
