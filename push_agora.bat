@@ -1,20 +1,40 @@
 @echo off
 cd /d "C:\Users\PC\Documents\GitHub\monitoramentotaf"
 
-echo === Status atual ===
-git status
+:: Tenta encontrar o git em locais comuns
+set GIT=
+if exist "C:\Program Files\Git\cmd\git.exe" set GIT="C:\Program Files\Git\cmd\git.exe"
+if exist "C:\Program Files (x86)\Git\cmd\git.exe" set GIT="C:\Program Files (x86)\Git\cmd\git.exe"
+if exist "%LOCALAPPDATA%\Programs\Git\cmd\git.exe" set GIT="%LOCALAPPDATA%\Programs\Git\cmd\git.exe"
+
+:: GitHub Desktop embeds git
+for /d %%D in ("%LOCALAPPDATA%\GitHubDesktop\app-*") do (
+  if exist "%%D\resources\app\git\cmd\git.exe" set GIT="%%D\resources\app\git\cmd\git.exe"
+)
+
+if "%GIT%"=="" (
+  echo ERRO: git.exe nao encontrado. Instale o Git for Windows.
+  pause
+  exit /b 1
+)
+
+echo Usando: %GIT%
+echo.
+
+echo === Adicionando todos os arquivos ===
+%GIT% add -A
 
 echo.
-echo === Adicionando todos os arquivos ===
-git add -A
+echo === Status ===
+%GIT% status --short
 
 echo.
 echo === Commit ===
-git commit -m "feat: wizard 2 etapas Registrar TAF, Sec Cmd Su, PMT, logo Tucandeira, sync importacao"
+%GIT% commit -m "feat: wizard 2 etapas Registrar TAF, Sec Cmd Su, PMT, logo Tucandeira, sync importacao"
 
 echo.
 echo === Push ===
-git push origin main
+%GIT% push origin main
 
 echo.
 echo === Concluido! ===
