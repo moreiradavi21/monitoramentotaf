@@ -193,7 +193,7 @@ function RegistrosPage() {
     if (!entry.militar_id) { toast.error("Selecione o militar."); return; }
     setSaving(true);
     try {
-      const mencao = entry.mencao.trim() || entryMencaoFinalAuto ?? null;
+      const mencao = entry.mencao.trim() || (entryMencaoFinalAuto ?? null);
       const partes: string[] = [];
       (["FLEX", "ABD", "COR", "BAR"] as const).forEach(k => { if (entryMencoesAuto[k]) partes.push(`${k}:${entryMencoesAuto[k]}`); });
       const observacoes = [partes.join(" "), entry.observacoes.trim()].filter(Boolean).join(" ").trim() || null;
