@@ -111,7 +111,7 @@ function AuthPage() {
   // A tabela agora exige aprovação; para o cadastro exibimos via função pública.
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.rpc("militares_publicos" as any);
+      const { data } = await supabase.from("militares_publicos" as any).select("id, nome, posto");
       if (Array.isArray(data)) setMilitares(data as any);
     })();
   }, []);
