@@ -294,7 +294,7 @@ function AuthPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label>Posto/Graduação</Label>
-                    <Select value={posto} onValueChange={setPosto}>
+                    <Select value={posto} onValueChange={(v) => { setPosto(v); setMilitarId(""); }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
