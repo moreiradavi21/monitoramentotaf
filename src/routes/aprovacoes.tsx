@@ -103,22 +103,20 @@ function AprovacoesPage() {
 
   const deleteUser = useMutation({
     mutationFn: async (id: string) => {
-      // Remove o papel (user_roles) — permitido pelo RLS
-      const { error: roleErr } = await supabase
-        .from("user_roles" as any)
-        .delete()
-        .eq("user_id", id);
-      if (roleErr) throw roleErr;
-      // Tenta remover o perfil; se RLS bloquear silenciosamente, não lança erro
-      await supabase.from("profiles").delete().eq("id", id);
+      // revoke_profile é SECURITY DEFINER — funciona mesmo com RLS restritivo.
+      // Define approved=false e remove de user_roles, desativando permanentemente a conta.
+      const { error } = await supabase.rpc("revoke_profile" as any, {
+        _profile_id: id,
+      });
+      if (error) throw error;
       return id;
     },
     onSuccess: (deletedId) => {
-      // Remove da cache local imediatamente (evita reaparecer sem refresh)
+      // Remove da cache imediatamente; no próximo fetch não reaparece (approved=false filtrado)
       qc.setQueryData(["profiles"], (old: Row[] = []) =>
         old.filter((p) => p.id !== deletedId),
       );
-      toast.success("Conta removida do sistema.");
+      toast.success("Conta desativada e removida do sistema.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir conta."),
   });
@@ -127,13 +125,15 @@ function AprovacoesPage() {
 
   const isStaff = (r: string | null) => r === "avaliador" || r === "administrador";
 
-  // ── Pendentes: só avaliador/admin aguardam aprovação manual ──
+  // ── Pendentes: avaliador/admin aguardam aprovação manual ──
   const pendingStaff = profiles.filter((p) => !p.approved && isStaff(p.requested_role));
 
   // ── Aprovados separados por grupo ──
   const approvedStaff = profiles.filter((p) => p.approved && isStaff(p.requested_role));
-  // Companhia: mostra TODAS (aprovadas ou não) — contas antigas podem ter approved=false
-  const allCia = profiles.filter((p) => !isStaff(p.requested_role));
+  // Companhia ativas (approved=true) — as com approved=false foram desativadas via revoke_profile
+  const activeCia = profiles.filter((p) => !isStaff(p.requested_role) && p.approved);
+  // Companhia pendentes (approved=false) — criadas antes da migração de auto-aprovação
+  const pendingCia = profiles.filter((p) => !isStaff(p.requested_role) && !p.approved);
 
   function ApprovedRow({ p }: { p: Row }) {
     return (
@@ -273,62 +273,34 @@ function AprovacoesPage() {
         </CardContent>
       </Card>
 
-      {/* ── Militares da Cia C Apoio ── */}
+      {/* ── Militares da Cia C Apoio — Ativos ── */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <CardTitle className="font-display tracking-wide text-primary">
               Militares da Cia C Apoio
-              <Badge variant="outline" className="ml-2 font-normal">{allCia.length}</Badge>
+              <Badge variant="outline" className="ml-2 font-normal">{activeCia.length}</Badge>
             </CardTitle>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Contas cadastradas como Cia C Apoio. Use "Aprovar" para liberar acesso ou "Excluir" para remover o perfil.
+            Contas ativas. "Excluir" desativa permanentemente a conta e ela não reaparece.
           </p>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {allCia.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum militar da Cia cadastrado ainda.</p>
+          {activeCia.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhuma conta ativa da Cia.</p>
           )}
-          {allCia.map((p) => (
+          {activeCia.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
               <div className="min-w-0">
                 <div className="font-medium truncate">{p.nome ?? "—"}</div>
                 <div className="text-xs text-muted-foreground">{p.posto ?? "—"}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge
-                  variant="outline"
-                  className={p.approved
-                    ? "border-green-400/50 text-green-600 dark:text-green-400"
-                    : "border-amber-400/50 text-amber-600 dark:text-amber-400"}
-                >
-                  {p.approved ? "Ativo" : "Pendente"}
+                <Badge variant="outline" className="border-green-400/50 text-green-600 dark:text-green-400">
+                  Ativo
                 </Badge>
-                {!p.approved && (
-                  <Button
-                    size="sm"
-                    onClick={() => approve.mutate({ id: p.id, role: "companhia" })}
-                    disabled={approve.isPending}
-                    className="shrink-0"
-                  >
-                    <UserCheck className="mr-1 h-4 w-4" />
-                    Aprovar
-                  </Button>
-                )}
-                {p.approved && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => revoke.mutate(p.id)}
-                    disabled={revoke.isPending}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <UserX className="mr-1 h-4 w-4" />
-                    Revogar
-                  </Button>
-                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -344,6 +316,58 @@ function AprovacoesPage() {
           ))}
         </CardContent>
       </Card>
+
+      {/* ── Militares da Cia C Apoio — Pendentes de ativação ── */}
+      {pendingCia.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-amber-500" />
+              <CardTitle className="font-display tracking-wide text-primary">
+                Cia C Apoio — Pendentes de ativação
+                <Badge variant="outline" className="ml-2 font-normal">{pendingCia.length}</Badge>
+              </CardTitle>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Contas que ainda não confirmaram o e-mail. Use "Aprovar" para ativar manualmente.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-2 pt-0">
+            {pendingCia.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-amber-400/30 bg-amber-500/5 px-4 py-3">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{p.nome ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground">{p.posto ?? "—"}</div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="outline" className="border-amber-400/50 text-amber-600 dark:text-amber-400">
+                    Pendente
+                  </Badge>
+                  <Button
+                    size="sm"
+                    onClick={() => approve.mutate({ id: p.id, role: "companhia" })}
+                    disabled={approve.isPending}
+                    className="shrink-0"
+                  >
+                    <UserCheck className="mr-1 h-4 w-4" />
+                    Aprovar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setConfirmDeleteId(p.id)}
+                    disabled={deleteUser.isPending}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Excluir
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       {/* Diálogo de confirmação de exclusão */}
       <AlertDialog open={!!confirmDeleteId} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
         <AlertDialogContent>
