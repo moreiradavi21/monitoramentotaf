@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserCheck, UserX } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, Users } from "lucide-react";
 import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,8 +91,38 @@ function AprovacoesPage() {
     onError: (e: any) => toast.error(e?.message ?? "Falha ao revogar."),
   });
 
-  const pending = profiles.filter((p) => !p.approved);
-  const approved = profiles.filter((p) => p.approved);
+  const isStaff = (r: string | null) => r === "avaliador" || r === "administrador";
+
+  // ── Pendentes: só avaliador/admin aguardam aprovação manual ──
+  const pendingStaff = profiles.filter((p) => !p.approved && isStaff(p.requested_role));
+
+  // ── Aprovados separados por grupo ──
+  const approvedStaff = profiles.filter((p) => p.approved && isStaff(p.requested_role));
+  const approvedCia   = profiles.filter((p) => p.approved && !isStaff(p.requested_role));
+
+  function ApprovedRow({ p }: { p: Row }) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
+        <div className="min-w-0">
+          <div className="font-medium truncate">{p.nome ?? "—"}</div>
+          <div className="text-xs text-muted-foreground">{p.posto ?? "—"}</div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant="outline">{roleLabel(p.requested_role)}</Badge>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => revoke.mutate(p.id)}
+            disabled={revoke.isPending}
+            className="text-destructive hover:text-destructive"
+          >
+            <UserX className="mr-1 h-4 w-4" />
+            Revogar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -108,40 +138,37 @@ function AprovacoesPage() {
         </p>
       </div>
 
-      {/* Pendentes */}
+      {/* ── Pendentes de aprovação (apenas Avaliador / Admin) ── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="font-display tracking-wide text-primary">
-            Pendentes{" "}
-            <Badge variant="outline" className="ml-1 font-normal">
-              {pending.length}
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-amber-500" />
+            <CardTitle className="font-display tracking-wide text-primary">
+              Avaliadores / Administradores pendentes
+              <Badge variant="outline" className="ml-2 font-normal">
+                {pendingStaff.length}
+              </Badge>
+            </CardTitle>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Contas que requerem aprovação manual antes de acessar o sistema.
+          </p>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
-          {isLoading && (
-            <p className="text-sm text-muted-foreground">Carregando...</p>
+          {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
+          {!isLoading && pendingStaff.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhuma conta pendente.</p>
           )}
-          {!isLoading && pending.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma conta pendente.
-            </p>
-          )}
-          {pending.map((p) => {
-            const chosen = pickedRole[p.id] ?? p.requested_role ?? "companhia";
+          {pendingStaff.map((p) => {
+            const chosen = pickedRole[p.id] ?? p.requested_role ?? "avaliador";
             return (
-              <div
-                key={p.id}
-                className="rounded-lg border border-border bg-muted/30 p-4 space-y-3"
-              >
+              <div key={p.id} className="rounded-lg border border-amber-400/30 bg-amber-500/5 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium">{p.nome ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">
                       {p.posto ?? "—"} · Solicitou:{" "}
-                      <span className="font-medium text-foreground">
-                        {roleLabel(p.requested_role)}
-                      </span>
+                      <span className="font-medium text-foreground">{roleLabel(p.requested_role)}</span>
                     </div>
                   </div>
                   <Badge variant="outline" className="shrink-0 border-amber-400/50 text-amber-600 dark:text-amber-400">
@@ -149,17 +176,9 @@ function AprovacoesPage() {
                   </Badge>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={chosen}
-                    onValueChange={(v) =>
-                      setPickedRole((s) => ({ ...s, [p.id]: v }))
-                    }
-                  >
-                    <SelectTrigger className="flex-1 min-w-[160px]">
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={chosen} onValueChange={(v) => setPickedRole((s) => ({ ...s, [p.id]: v }))}>
+                    <SelectTrigger className="flex-1 min-w-[160px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="companhia">Militar da Companhia</SelectItem>
                       <SelectItem value="avaliador">Avaliador</SelectItem>
                       <SelectItem value="administrador">Administrador</SelectItem>
                     </SelectContent>
@@ -180,46 +199,44 @@ function AprovacoesPage() {
         </CardContent>
       </Card>
 
-      {/* Aprovados */}
+      {/* ── Avaliadores / Administradores aprovados ── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="font-display tracking-wide text-primary">
-            Aprovados{" "}
-            <Badge variant="outline" className="ml-1 font-normal">
-              {approved.length}
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <CardTitle className="font-display tracking-wide text-primary">
+              Avaliadores / Administradores aprovados
+              <Badge variant="outline" className="ml-2 font-normal">{approvedStaff.length}</Badge>
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {approved.length === 0 && (
-            <p className="text-sm text-muted-foreground">Ninguém aprovado.</p>
+          {approvedStaff.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum aprovado nesta categoria.</p>
           )}
-          {approved.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3"
-            >
-              <div className="min-w-0">
-                <div className="font-medium truncate">{p.nome ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">
-                  {p.posto ?? "—"}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Badge variant="outline">{roleLabel(p.requested_role)}</Badge>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => revoke.mutate(p.id)}
-                  disabled={revoke.isPending}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <UserX className="mr-1 h-4 w-4" />
-                  Revogar
-                </Button>
-              </div>
-            </div>
-          ))}
+          {approvedStaff.map((p) => <ApprovedRow key={p.id} p={p} />)}
+        </CardContent>
+      </Card>
+
+      {/* ── Militares da Cia C Apoio (auto-aprovados) ── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <CardTitle className="font-display tracking-wide text-primary">
+              Militares da Cia C Apoio
+              <Badge variant="outline" className="ml-2 font-normal">{approvedCia.length}</Badge>
+            </CardTitle>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Contas auto-aprovadas no cadastro. Aqui você pode revogar o acesso se necessário.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-2 pt-0">
+          {approvedCia.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum militar da Cia cadastrado ainda.</p>
+          )}
+          {approvedCia.map((p) => <ApprovedRow key={p.id} p={p} />)}
         </CardContent>
       </Card>
     </div>
