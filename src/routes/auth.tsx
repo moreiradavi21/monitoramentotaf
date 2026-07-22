@@ -375,8 +375,13 @@ function AuthPage() {
                                     {postoPlural(cat.value as any)}
                                   </div>
                                   {list.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>
+                                    <SelectItem
+                                      key={m.id}
+                                      value={m.id}
+                                      disabled={!m.disponivel}
+                                    >
                                       {m.nome}
+                                      {!m.disponivel && " (já registrado)"}
                                     </SelectItem>
                                   ))}
                                 </div>
