@@ -45,9 +45,9 @@ const POSTOS_AVAL_ADMIN = POSTOS_MILITARES.filter(
 
 
 const REQUESTED_ROLES = [
-  { value: "companhia", label: "Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF." },
-  { value: "avaliador", label: "Militar Avaliador", desc: "Lança e edita os resultados do TAF (requer aprovação)." },
-  { value: "administrador", label: "Militar Administrador", desc: "Gerencia militares, TAF e aprovações (requer aprovação)." },
+  { value: "companhia", label: "Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF. Acesso imediato após confirmação do e-mail." },
+  { value: "avaliador", label: "Militar Avaliador", desc: "Lança e edita os resultados do TAF (requer aprovação do administrador)." },
+  { value: "administrador", label: "Militar Administrador", desc: "Gerencia militares, TAF e aprovações (requer aprovação do administrador)." },
 ] as const;
 
 const loginSchema = z.object({
@@ -160,7 +160,8 @@ function AuthPage() {
       });
       if (parsed.data.requested_role === "companhia") {
         toast.success(
-          "Conta criada! Aguardando aprovação do administrador para acesso completo.",
+          "Conta criada! Verifique seu e-mail e clique no link para ativar o acesso — nenhuma aprovação necessária.",
+          { duration: 7000 },
         );
       } else {
         toast.success(
