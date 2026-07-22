@@ -103,14 +103,22 @@ function AprovacoesPage() {
 
   const deleteUser = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("admin_delete_user" as any, {
-        _user_id: id,
-      });
-      if (error) throw error;
+      // Remove função/papel primeiro
+      const { error: roleErr } = await supabase
+        .from("user_roles" as any)
+        .delete()
+        .eq("user_id", id);
+      if (roleErr) throw roleErr;
+      // Remove o perfil
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", id);
+      if (profErr) throw profErr;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profiles"] });
-      toast.success("Conta excluída com sucesso.");
+      toast.success("Conta removida do sistema.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir conta."),
   });
