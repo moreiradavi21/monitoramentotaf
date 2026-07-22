@@ -266,7 +266,6 @@ function CompleteProfile({ userId, onComplete }: { userId: string; onComplete: (
   const [militarId, setMilitarId] = useState("");
   const [militares, setMilitares] = useState<{ id: string; nome: string; posto: string }[]>([]);
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const auth = useAuth();
 
   useEffect(() => {
@@ -284,38 +283,31 @@ function CompleteProfile({ userId, onComplete }: { userId: string; onComplete: (
     }
     setLoading(true);
     try {
-      const { error } = await supabase.from("profiles" as any).upsert({
+      // Cria/restaura o perfil com auto-aprovação (igual ao trigger do signup)
+      const { error: profErr } = await supabase.from("profiles" as any).upsert({
         id: userId,
         nome: nome.trim(),
         posto,
         requested_role: "companhia",
-        approved: false,
+        approved: true,
         militar_id: militarId,
       });
-      if (error) throw error;
-      setDone(true);
-      toast.success("Dados salvos! Aguarde a aprovação do administrador.");
+      if (profErr) throw profErr;
+
+      // Tenta restaurar o papel (pode falhar por RLS — admin precisará aprovar se falhar)
+      await supabase.from("user_roles" as any).upsert({
+        user_id: userId,
+        role: "user",
+      });
+
+      // Recarrega o perfil — se user_roles foi inserido, o usuário entra direto
       await onComplete();
+      toast.success("Cadastro restaurado! Você já pode usar o sistema.");
     } catch (err: any) {
-      toast.error(err?.message ?? "Falha ao salvar dados.");
+      toast.error(err?.message ?? "Falha ao salvar dados. Peça ao administrador para aprovar sua conta.");
     } finally {
       setLoading(false);
     }
-  }
-
-  if (done) {
-    return (
-      <div className="mx-auto max-w-lg py-16 text-center px-4">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <ShieldCheck className="h-8 w-8 text-primary" />
-        </div>
-        <h1 className="font-display text-2xl text-primary">Cadastro enviado!</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Aguarde a aprovação do administrador para acessar o sistema.
-        </p>
-        <Button variant="outline" className="mt-4" onClick={auth.signOut}>Sair</Button>
-      </div>
-    );
   }
 
   return (
