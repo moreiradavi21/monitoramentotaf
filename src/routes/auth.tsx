@@ -321,29 +321,44 @@ function AuthPage() {
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {POSTOS.map((cat) => {
-                            const list = militares.filter(
-                              (m) => m.posto === cat.value,
-                            );
-                            if (!list.length) return null;
-                            return (
-                              <div key={cat.value}>
-                                <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                                  {postoPlural(cat.value as any)}
+                          {(() => {
+                            const cats = categoriasParaPosto(posto);
+                            if (!posto) {
+                              return (
+                                <div className="px-2 py-3 text-xs text-muted-foreground">
+                                  Selecione primeiro o posto/graduação.
                                 </div>
-                                {list.map((m) => (
-                                  <SelectItem key={m.id} value={m.id}>
-                                    {m.nome}
-                                  </SelectItem>
-                                ))}
-                              </div>
+                              );
+                            }
+                            const grupos = POSTOS.filter((c) => cats.includes(c.value));
+                            const total = grupos.reduce(
+                              (n, cat) => n + militares.filter((m) => m.posto === cat.value).length,
+                              0,
                             );
-                          })}
-                          {militares.length === 0 && (
-                            <div className="px-2 py-3 text-xs text-muted-foreground">
-                              Nenhum militar disponível.
-                            </div>
-                          )}
+                            if (total === 0) {
+                              return (
+                                <div className="px-2 py-3 text-xs text-muted-foreground">
+                                  Nenhum militar disponível.
+                                </div>
+                              );
+                            }
+                            return grupos.map((cat) => {
+                              const list = militares.filter((m) => m.posto === cat.value);
+                              if (!list.length) return null;
+                              return (
+                                <div key={cat.value}>
+                                  <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                                    {postoPlural(cat.value as any)}
+                                  </div>
+                                  {list.map((m) => (
+                                    <SelectItem key={m.id} value={m.id}>
+                                      {m.nome}
+                                    </SelectItem>
+                                  ))}
+                                </div>
+                              );
+                            });
+                          })()}
                         </SelectContent>
                       </Select>
                     </div>
