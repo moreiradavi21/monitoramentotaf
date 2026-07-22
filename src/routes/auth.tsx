@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { MailCheck, RefreshCw } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,6 +113,10 @@ function AuthPage() {
     useState<"companhia" | "avaliador" | "administrador">("companhia");
   const [militarId, setMilitarId] = useState<string>("");
 
+  // Estado pós-cadastro Companhia: aguardando confirmação de e-mail
+  const [emailPendente, setEmailPendente] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+
   const [militares, setMilitares] = useState<
     { id: string; nome: string; posto: string; disponivel: boolean }[]
   >([]);
@@ -201,21 +206,99 @@ function AuthPage() {
         requested_role: parsed.data.requested_role,
         militar_id: parsed.data.militar_id ?? null,
       });
+
       if (parsed.data.requested_role === "companhia") {
-        toast.success(
-          "Conta criada! Aguardando aprovação do administrador para acesso completo.",
-        );
+        // Garante que não há sessão ativa (caso confirmação de e-mail esteja desativada no Supabase)
+        await supabase.auth.signOut();
+
+        // Envia magic link — funciona independente das configurações do dashboard
+        const { error: otpErr } = await supabase.auth.signInWithOtp({
+          email: parsed.data.email,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            shouldCreateUser: false, // conta já foi criada acima
+          },
+        });
+        if (otpErr) throw otpErr;
+
+        // Exibe tela "Verifique seu e-mail"
+        setEmailPendente(parsed.data.email);
       } else {
         toast.success(
           "Solicitação enviada! Sua conta ficará ativa após aprovação do administrador.",
         );
+        setTab("login");
       }
-      setTab("login");
     } catch (err: any) {
       toast.error(err?.message ?? "Falha ao registrar.");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResend() {
+    if (!emailPendente) return;
+    setResendLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: emailPendente,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          shouldCreateUser: false,
+        },
+      });
+      if (error) throw error;
+      toast.success("Link reenviado! Verifique sua caixa de entrada.");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao reenviar.");
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
+  // ── Tela: confirmação de e-mail pendente (só para Companhia) ──
+  if (emailPendente) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-5 py-10 text-center px-8">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <MailCheck className="h-8 w-8 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="font-display text-xl tracking-wide text-primary">
+                Verifique seu e-mail
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Enviamos um link de confirmação para:
+              </p>
+              <p className="font-medium text-foreground break-all">{emailPendente}</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Clique no link do e-mail para ativar sua conta e acessar o aplicativo. Verifique também a pasta de spam.
+            </p>
+            <div className="flex flex-col w-full gap-2">
+              <Button
+                variant="outline"
+                onClick={handleResend}
+                disabled={resendLoading}
+                className="w-full gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${resendLoading ? "animate-spin" : ""}`} />
+                {resendLoading ? "Reenviando..." : "Reenviar link de confirmação"}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={() => { setEmailPendente(null); setTab("login"); }}
+              >
+                Voltar para o login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
