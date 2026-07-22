@@ -121,12 +121,17 @@ function AprovacoesPage() {
 
   const deleteUser = useMutation({
     mutationFn: async (id: string) => {
-      // revoke_profile é SECURITY DEFINER — funciona mesmo com RLS restritivo.
-      // Define approved=false e remove de user_roles, desativando permanentemente a conta.
-      const { error } = await supabase.rpc("revoke_profile" as any, {
-        _profile_id: id,
+      // Tenta deleção completa via admin_delete_user (requer migração aplicada)
+      const { error } = await supabase.rpc("admin_delete_user" as any, {
+        _user_id: id,
       });
-      if (error) throw error;
+      if (error) {
+        // Fallback: revoke_profile desativa a conta (sem deletar auth.users)
+        const { error: revokeErr } = await supabase.rpc("revoke_profile" as any, {
+          _profile_id: id,
+        });
+        if (revokeErr) throw revokeErr;
+      }
       return id;
     },
     onSuccess: (deletedId) => {
