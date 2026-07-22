@@ -30,7 +30,7 @@ echo === Status ===
 
 echo.
 echo === Commit ===
-%GIT% commit -m "fix: dialog registros mobile-first (tela cheia no celular, header+footer fixos, lista colapsada)"
+%GIT% commit -m "feat: pagina Cientes + mobile dialog fix + top4 ranking"
 
 echo.
 echo === Push ===

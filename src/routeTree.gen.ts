@@ -13,6 +13,7 @@ import { Route as RegistrosRouteImport } from './routes/registros'
 import { Route as MilitaresRouteImport } from './routes/militares'
 import { Route as MeusResultadosRouteImport } from './routes/meus-resultados'
 import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as CientesRouteImport } from './routes/cientes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as IndexRouteImport } from './routes/index'
@@ -36,6 +37,11 @@ const MeusResultadosRoute = MeusResultadosRouteImport.update({
 const ImportarRoute = ImportarRouteImport.update({
   id: '/importar',
   path: '/importar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CientesRoute = CientesRouteImport.update({
+  id: '/cientes',
+  path: '/cientes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aprovacoes': typeof AprovacoesRoute
   '/auth': typeof AuthRoute
+  '/cientes': typeof CientesRoute
   '/importar': typeof ImportarRoute
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aprovacoes': typeof AprovacoesRoute
   '/auth': typeof AuthRoute
+  '/cientes': typeof CientesRoute
   '/importar': typeof ImportarRoute
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/aprovacoes': typeof AprovacoesRoute
   '/auth': typeof AuthRoute
+  '/cientes': typeof CientesRoute
   '/importar': typeof ImportarRoute
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aprovacoes'
     | '/auth'
+    | '/cientes'
     | '/importar'
     | '/meus-resultados'
     | '/militares'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aprovacoes'
     | '/auth'
+    | '/cientes'
     | '/importar'
     | '/meus-resultados'
     | '/militares'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aprovacoes'
     | '/auth'
+    | '/cientes'
     | '/importar'
     | '/meus-resultados'
     | '/militares'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AprovacoesRoute: typeof AprovacoesRoute
   AuthRoute: typeof AuthRoute
+  CientesRoute: typeof CientesRoute
   ImportarRoute: typeof ImportarRoute
   MeusResultadosRoute: typeof MeusResultadosRoute
   MilitaresRoute: typeof MilitaresRoute
@@ -164,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImportarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cientes': {
+      id: '/cientes'
+      path: '/cientes'
+      fullPath: '/cientes'
+      preLoaderRoute: typeof CientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AprovacoesRoute: AprovacoesRoute,
   AuthRoute: AuthRoute,
+  CientesRoute: CientesRoute,
   ImportarRoute: ImportarRoute,
   MeusResultadosRoute: MeusResultadosRoute,
   MilitaresRoute: MilitaresRoute,

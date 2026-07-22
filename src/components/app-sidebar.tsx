@@ -6,6 +6,7 @@ import {
   UserCheck,
   Shield,
   FileSpreadsheet,
+  BadgeCheck,
 } from "lucide-react";
 import { PELOTOES } from "@/lib/taf";
 
@@ -43,6 +44,7 @@ export function AppSidebar() {
     { title: "Registros", url: "/registros", icon: ClipboardList },
     { title: "Aprovações", url: "/aprovacoes", icon: UserCheck },
     { title: "Importar Planilha", url: "/importar", icon: FileSpreadsheet },
+    { title: "Cientes", url: "/cientes", icon: BadgeCheck },
   ];
 
   return (
