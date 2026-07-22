@@ -25,10 +25,13 @@ export const Route = createFileRoute("/auth")({
 
 const POSTOS_MILITARES = [
   "AL",
+  "Recruta",
+  "Soldado",
+  "Cabo",
   "3° SGT",
   "2° SGT",
   "1° SGT",
-  "Sub Tenente",
+  "Subtenente",
   "Aspirante",
   "2° Tenente",
   "1° Tenente",
@@ -40,14 +43,24 @@ const POSTOS_AVAL_ADMIN = POSTOS_MILITARES.filter(
     p === "AL" ||
     p.includes("SGT") ||
     p.includes("Tenente") ||
-    p === "Sub Tenente",
+    p === "Subtenente",
 );
 
+// Mapeia o posto selecionado no cadastro para as categorias da tabela `militares`.
+function categoriasParaPosto(posto: string): string[] {
+  if (["Capitão", "1° Tenente", "2° Tenente", "Aspirante"].includes(posto))
+    return ["oficial"];
+  if (["Subtenente", "1° SGT", "2° SGT", "3° SGT"].includes(posto))
+    return ["sargento"];
+  if (["AL", "Cabo", "Soldado", "Recruta"].includes(posto))
+    return ["cabo", "soldado", "recruta"];
+  return [];
+}
 
 const REQUESTED_ROLES = [
-  { value: "companhia", label: "Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF. Acesso imediato após confirmação do e-mail." },
-  { value: "avaliador", label: "Militar Avaliador", desc: "Lança e edita os resultados do TAF (requer aprovação do administrador)." },
-  { value: "administrador", label: "Militar Administrador", desc: "Gerencia militares, TAF e aprovações (requer aprovação do administrador)." },
+  { value: "companhia", label: "Militares da Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF." },
+  { value: "avaliador", label: "Militar Avaliador", desc: "Lança e edita os resultados do TAF (requer aprovação)." },
+  { value: "administrador", label: "Militar Administrador", desc: "Gerencia militares, TAF e aprovações (requer aprovação)." },
 ] as const;
 
 const loginSchema = z.object({
@@ -100,21 +113,45 @@ function AuthPage() {
   const [militarId, setMilitarId] = useState<string>("");
 
   const [militares, setMilitares] = useState<
-    { id: string; nome: string; posto: string }[]
+    { id: string; nome: string; posto: string; disponivel: boolean }[]
   >([]);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   useEffect(() => {
     if (session) navigate({ to: "/" });
   }, [session, navigate]);
 
-  // Carrega lista de militares (leitura pública indisponível — usamos RPC?)
-  // A tabela agora exige aprovação; para o cadastro exibimos via função pública.
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("militares_publicos" as any).select("id, nome, posto");
+      const { data } = await supabase
+        .from("militares_disponiveis" as any)
+        .select("id, nome, posto, disponivel");
       if (Array.isArray(data)) setMilitares(data as any);
     })();
   }, []);
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    const email = forgotEmail.trim();
+    if (!z.string().email().safeParse(email).success) {
+      return toast.error("Informe um e-mail válido.");
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link de recuperação para o seu e-mail.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao enviar o e-mail.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const postoOptions = useMemo(
     () => (requestedRole === "companhia" ? POSTOS_MILITARES : POSTOS_AVAL_ADMIN),
@@ -148,6 +185,12 @@ function AuthPage() {
       militar_id: requestedRole === "companhia" ? militarId : null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (parsed.data.requested_role === "companhia" && parsed.data.militar_id) {
+      const m = militares.find((x) => x.id === parsed.data.militar_id);
+      if (m && !m.disponivel) {
+        return toast.error("Este militar já possui uma conta registrada.");
+      }
+    }
     setLoading(true);
     try {
       await signUp({
@@ -160,8 +203,7 @@ function AuthPage() {
       });
       if (parsed.data.requested_role === "companhia") {
         toast.success(
-          "Conta criada! Verifique seu e-mail e clique no link para ativar o acesso — nenhuma aprovação necessária.",
-          { duration: 7000 },
+          "Conta criada! Aguardando aprovação do administrador para acesso completo.",
         );
       } else {
         toast.success(
@@ -234,7 +276,32 @@ function AuthPage() {
                 <Button className="w-full" type="submit" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); }}
+                  className="w-full text-center text-xs text-muted-foreground underline"
+                >
+                  Esqueci minha senha
+                </button>
               </form>
+
+              {forgotOpen && (
+                <form className="mt-3 space-y-2 rounded-md border border-border p-3" onSubmit={handleForgot}>
+                  <Label htmlFor="fp-email" className="text-xs">
+                    Enviaremos um link de recuperação para o e-mail de cadastro
+                  </Label>
+                  <Input
+                    id="fp-email"
+                    type="email"
+                    autoComplete="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                  />
+                  <Button type="submit" size="sm" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : "Enviar link de recuperação"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="signup" className="mt-4">
@@ -282,7 +349,7 @@ function AuthPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label>Posto/Graduação</Label>
-                    <Select value={posto} onValueChange={setPosto}>
+                    <Select value={posto} onValueChange={(v) => { setPosto(v); setMilitarId(""); }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
@@ -309,29 +376,49 @@ function AuthPage() {
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {POSTOS.map((cat) => {
-                            const list = militares.filter(
-                              (m) => m.posto === cat.value,
-                            );
-                            if (!list.length) return null;
-                            return (
-                              <div key={cat.value}>
-                                <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                                  {postoPlural(cat.value as any)}
+                          {(() => {
+                            const cats = categoriasParaPosto(posto);
+                            if (!posto) {
+                              return (
+                                <div className="px-2 py-3 text-xs text-muted-foreground">
+                                  Selecione primeiro o posto/graduação.
                                 </div>
-                                {list.map((m) => (
-                                  <SelectItem key={m.id} value={m.id}>
-                                    {m.nome}
-                                  </SelectItem>
-                                ))}
-                              </div>
+                              );
+                            }
+                            const grupos = POSTOS.filter((c) => cats.includes(c.value));
+                            const total = grupos.reduce(
+                              (n, cat) => n + militares.filter((m) => m.posto === cat.value).length,
+                              0,
                             );
-                          })}
-                          {militares.length === 0 && (
-                            <div className="px-2 py-3 text-xs text-muted-foreground">
-                              Nenhum militar disponível.
-                            </div>
-                          )}
+                            if (total === 0) {
+                              return (
+                                <div className="px-2 py-3 text-xs text-muted-foreground">
+                                  Nenhum militar disponível.
+                                </div>
+                              );
+                            }
+                            return grupos.map((cat) => {
+                              const list = militares.filter((m) => m.posto === cat.value);
+                              if (!list.length) return null;
+                              return (
+                                <div key={cat.value}>
+                                  <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                                    {postoPlural(cat.value as any)}
+                                  </div>
+                                  {list.map((m) => (
+                                    <SelectItem
+                                      key={m.id}
+                                      value={m.id}
+                                      disabled={!m.disponivel}
+                                    >
+                                      {m.nome}
+                                      {!m.disponivel && " (já registrado)"}
+                                    </SelectItem>
+                                  ))}
+                                </div>
+                              );
+                            });
+                          })()}
                         </SelectContent>
                       </Select>
                     </div>

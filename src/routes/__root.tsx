@@ -243,6 +243,7 @@ function AppGate({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isAuthPage = pathname === "/auth";
+  const isPublicPage = isAuthPage || pathname === "/reset-password";
 
   if (auth.loading) {
     return (
@@ -256,11 +257,11 @@ function AppGate({ children }: { children: ReactNode }) {
   }
 
   if (!auth.user) {
-    if (isAuthPage) return <>{children}</>;
+    if (isPublicPage) return <>{children}</>;
     return <Navigate to="/auth" replace />;
   }
 
-  if (isAuthPage) return <>{children}</>;
+  if (isPublicPage) return <>{children}</>;
 
   if (!auth.approved) {
     return (
