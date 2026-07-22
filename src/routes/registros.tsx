@@ -368,186 +368,189 @@ function RegistrosPage() {
 
       {/* ── WIZARD: Registrar TAF ── */}
       <Dialog open={sessionOpen} onOpenChange={(o) => { if (!o) setSessionOpen(false); }}>
-        <DialogContent className="max-w-lg w-[calc(100%-1rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6 top-2 translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
-          <DialogHeader>
-            <DialogTitle className="font-display tracking-wide">Registrar TAF</DialogTitle>
-          </DialogHeader>
+        {/* Mobile: tela cheia. Desktop: modal centralizado */}
+        <DialogContent className="flex flex-col gap-0 p-0 inset-0 h-[100dvh] w-full rounded-none translate-x-0 translate-y-0 top-0 left-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-lg">
 
-          {/* ── Etapa 1: Identificação do TAF ── */}
-          {step === 1 && (
-            <div className="space-y-4 py-2">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Etapa 1 de 2</span> — Defina os dados do teste. Eles serão aplicados a todos os militares desta sessão.
-              </p>
-
-              <div className="space-y-2">
-                <Label>Data do teste</Label>
-                <Input type="date" value={session.data_aplicacao} onChange={e => setSession(s => ({ ...s, data_aplicacao: e.target.value }))} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>TAF</Label>
-                  <Select value={String(session.taf_numero)} onValueChange={v => setSession(s => ({ ...s, taf_numero: Number(v) }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Chamada</Label>
-                  <Select value={String(session.chamada)} onValueChange={v => setSession(s => ({ ...s, chamada: Number(v) }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSessionOpen(false)}>Cancelar</Button>
-                <Button onClick={() => { if (!session.data_aplicacao) { toast.error("Informe a data."); return; } setStep(2); }}>
-                  Próximo
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-
-          {/* ── Etapa 2: Registro das menções ── */}
-          {step === 2 && (
-            <div className="space-y-4 py-2">
-              {/* Banner da sessão */}
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium">{session.taf_numero}º TAF</span>
-                  <span className="text-muted-foreground">·</span>
-                  <span>{session.chamada}ª Chamada</span>
-                  <span className="text-muted-foreground">·</span>
+          {/* Cabeçalho fixo */}
+          <div className="flex shrink-0 items-center justify-between border-b px-4 py-3 sm:px-6">
+            <div>
+              <h2 className="font-display text-base font-semibold tracking-wide">Registrar TAF</h2>
+              {step === 2 && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                  <span className="font-medium text-primary">{session.taf_numero}º TAF · {session.chamada}ª Chamada</span>
+                  <span>·</span>
                   <span>{new Date(session.data_aplicacao + "T12:00:00").toLocaleDateString("pt-BR")}</span>
-                  {savedCount > 0 && (
-                    <>
-                      <span className="text-muted-foreground">·</span>
-                      <Badge variant="secondary">{savedCount} registrado{savedCount > 1 ? "s" : ""}</Badge>
-                    </>
+                  {savedCount > 0 && <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">{savedCount} ✓</Badge>}
+                  <button onClick={() => setStep(1)} className="ml-1 text-primary underline underline-offset-2">alterar</button>
+                </div>
+              )}
+            </div>
+            <button onClick={() => setSessionOpen(false)} className="rounded-sm p-1 opacity-70 hover:opacity-100 focus:outline-none">
+              <span className="sr-only">Fechar</span>
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          {/* Corpo rolável */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+
+            {/* ── Etapa 1 ── */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Defina os dados do teste. Eles serão aplicados a todos os militares desta sessão.
+                </p>
+                <div className="space-y-2">
+                  <Label>Data do teste</Label>
+                  <Input type="date" value={session.data_aplicacao} onChange={e => setSession(s => ({ ...s, data_aplicacao: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>TAF</Label>
+                    <Select value={String(session.taf_numero)} onValueChange={v => setSession(s => ({ ...s, taf_numero: Number(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Chamada</Label>
+                    <Select value={String(session.chamada)} onValueChange={v => setSession(s => ({ ...s, chamada: Number(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Etapa 2 ── */}
+            {step === 2 && (
+              <div className="space-y-4">
+
+                {/* Seleção de militar */}
+                <div className="space-y-2">
+                  <Label>Militar</Label>
+                  {entry.militar_id ? (
+                    <div className="flex items-center gap-2 rounded-md border px-3 py-2.5 bg-primary/5">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{entryMilitar?.nome}</p>
+                        {entryMilitar?.nome_guerra && <p className="text-xs text-muted-foreground">{entryMilitar.nome_guerra}</p>}
+                      </div>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => { setEntry(e => ({ ...e, militar_id: "" })); setEntrySearch(""); }}>Trocar</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 opacity-50" />
+                        <Input value={entrySearch} onChange={e => setEntrySearch(e.target.value)} placeholder="Digite o nome do militar..." className="pl-9 h-11 text-base" autoComplete="off" autoFocus />
+                      </div>
+                      {entrySearch.trim().length === 0 ? (
+                        <p className="px-1 pt-1 text-xs text-muted-foreground">Digite para buscar na lista de militares.</p>
+                      ) : (
+                        <div className="max-h-48 overflow-y-auto rounded-md border bg-background shadow-sm">
+                          {(() => {
+                            const q = entrySearch.trim().toLowerCase();
+                            const filtered = militares.filter(m => m.nome.toLowerCase().includes(q) || (m.nome_guerra ?? "").toLowerCase().includes(q));
+                            if (!filtered.length) return (
+                              <div className="space-y-2 p-3 text-center text-sm">
+                                <p className="text-muted-foreground">Nenhum militar encontrado.</p>
+                                <Button type="button" size="sm" variant="secondary" onClick={() => { setNovoMilitar({ nome: entrySearch.trim(), nome_guerra: "", posto: "soldado", data_nascimento: "" }); setAfterNew("entry"); setNovoMilitarOpen(true); }}>
+                                  <UserPlus className="mr-2 h-4 w-4" />Cadastrar "{entrySearch.trim()}"
+                                </Button>
+                              </div>
+                            );
+                            return POSTOS.map(p => {
+                              const list = filtered.filter(m => m.posto === p.value);
+                              if (!list.length) return null;
+                              return (
+                                <div key={p.value}>
+                                  <div className="sticky top-0 bg-muted/70 px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">{p.plural}</div>
+                                  {list.map(m => (
+                                    <button key={m.id} type="button" onClick={() => { setEntry(e => ({ ...e, militar_id: m.id })); setEntrySearch(""); }} className="flex w-full items-center gap-2 px-3 py-3 text-left text-sm active:bg-accent hover:bg-accent">
+                                      <span className="flex-1 truncate">{m.nome}</span>
+                                      {m.nome_guerra && <span className="text-xs text-muted-foreground shrink-0">{m.nome_guerra}</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setStep(1)}>
-                  <RotateCcw className="mr-1 h-3 w-3" />
-                  Alterar
+
+                {/* Exercícios — grade 2×2 compacta */}
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">Exercícios</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <ExFieldCompact label="Flexão" unit="rep." value={entry.flexao} onChange={v => setEntry(e => ({ ...e, flexao: v }))} />
+                    <ExFieldCompact label="Abdominal" unit="rep." value={entry.abdominal} onChange={v => setEntry(e => ({ ...e, abdominal: v }))} />
+                    <ExFieldCompact label="Corrida" unit="m" value={entry.corrida_metros} onChange={v => setEntry(e => ({ ...e, corrida_metros: v }))} />
+                    <ExFieldCompact label="Barra" unit="rep." value={entry.barra} onChange={v => setEntry(e => ({ ...e, barra: v }))} />
+                  </div>
+                </div>
+
+                {/* Menções automáticas — linha compacta */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Auto{entryIdade != null ? ` (${entryIdade}a)` : ""}:</span>
+                  {(["COR","FLEX","ABD","BAR"] as const).map(k => (
+                    <span key={k} className="tabular-nums">{k} <b>{entryMencoesAuto[k] ?? "—"}</b></span>
+                  ))}
+                  <span className="ml-auto font-semibold text-primary">Final: {entryMencaoFinalAuto ?? "—"}</span>
+                </div>
+
+                {/* Menção manual */}
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Menção final <span className="text-xs font-normal text-muted-foreground">(opcional — usa automática se vazio)</span></Label>
+                  <Input placeholder={entryMencaoFinalAuto ?? "—"} value={entry.mencao} onChange={e => setEntry(x => ({ ...x, mencao: e.target.value }))} className="h-10" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Observações</Label>
+                  <Textarea rows={2} value={entry.observacoes} onChange={e => setEntry(x => ({ ...x, observacoes: e.target.value }))} className="resize-none text-sm" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Rodapé fixo */}
+          <div className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
+            {step === 1 ? (
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setSessionOpen(false)}>Cancelar</Button>
+                <Button onClick={() => { if (!session.data_aplicacao) { toast.error("Informe a data."); return; } setStep(2); }} className="flex-1 sm:flex-none">
+                  Próximo <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
-
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Etapa 2 de 2</span> — Selecione um militar e registre as menções. Clique em <b>Registrar próximo</b> para continuar na mesma sessão.
-              </p>
-
-              {/* Seleção de militar */}
-              <div className="space-y-2">
-                <Label>Militar</Label>
-                {entry.militar_id ? (
-                  <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-                    <Check className="h-4 w-4 text-primary shrink-0" />
-                    <span className="flex-1 truncate text-sm">{entryMilitar?.nome}</span>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => { setEntry(e => ({ ...e, militar_id: "" })); setEntrySearch(""); }}>Trocar</Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 opacity-70" />
-                      <Input value={entrySearch} onChange={e => setEntrySearch(e.target.value)} placeholder="Buscar militar pelo nome..." className="pl-9" autoComplete="off" />
-                    </div>
-                    <div className="max-h-44 overflow-y-auto rounded-md border">
-                      {(() => {
-                        const q = entrySearch.trim().toLowerCase();
-                        const filtered = militares.filter(m => !q || m.nome.toLowerCase().includes(q) || (m.nome_guerra ?? "").toLowerCase().includes(q));
-                        if (!filtered.length) return (
-                          <div className="space-y-2 p-3 text-center text-sm">
-                            <p className="text-muted-foreground">Nenhum militar encontrado.</p>
-                            <Button type="button" size="sm" variant="secondary" onClick={() => { setNovoMilitar({ nome: entrySearch.trim(), nome_guerra: "", posto: "soldado", data_nascimento: "" }); setAfterNew("entry"); setNovoMilitarOpen(true); }}>
-                              <UserPlus className="mr-2 h-4 w-4" />Cadastrar "{entrySearch.trim() || "novo"}"
-                            </Button>
-                          </div>
-                        );
-                        return POSTOS.map(p => {
-                          const list = filtered.filter(m => m.posto === p.value);
-                          if (!list.length) return null;
-                          return (
-                            <div key={p.value}>
-                              <div className="sticky top-0 bg-muted/60 px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">{p.plural}</div>
-                              {list.map(m => (
-                                <button key={m.id} type="button" onClick={() => { setEntry(e => ({ ...e, militar_id: m.id })); setEntrySearch(""); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-accent">
-                                  <span className="flex-1 truncate">{m.nome}</span>
-                                  {m.nome_guerra && <span className="text-xs text-muted-foreground">{m.nome_guerra}</span>}
-                                </button>
-                              ))}
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Exercícios */}
-              <div className="rounded-md border border-border bg-muted/30 p-3">
-                <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Exercícios</p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <ExField label="Flexão" unit="rep." exVal={entry.flexao} onEx={v => setEntry(e => ({ ...e, flexao: v }))} />
-                  <ExField label="Abdominal" unit="rep." exVal={entry.abdominal} onEx={v => setEntry(e => ({ ...e, abdominal: v }))} />
-                  <ExField label="Corrida" unit="m" exVal={entry.corrida_metros} onEx={v => setEntry(e => ({ ...e, corrida_metros: v }))} />
-                  <ExField label="Barra" unit="rep." exVal={entry.barra} onEx={v => setEntry(e => ({ ...e, barra: v }))} />
-                </div>
-              </div>
-
-              {/* Menções automáticas */}
-              <div className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs">
-                <p className="mb-1 uppercase tracking-widest text-muted-foreground">
-                  Menções automáticas por idade{entryIdade != null ? ` — ${entryIdade} anos` : entryMilitar && !entryMilitar.data_nascimento ? " — cadastre a data de nascimento" : ""}
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  {(["COR", "FLEX", "ABD", "BAR"] as const).map(k => (
-                    <span key={k}>{k}: <b>{entryMencoesAuto[k] ?? "—"}</b></span>
-                  ))}
-                  <span className="ml-auto font-medium">Final: <b>{entryMencaoFinalAuto ?? "—"}</b></span>
-                </div>
-              </div>
-
-              {/* Menção manual (opcional) */}
-              <div className="space-y-2">
-                <Label>Menção final <span className="text-xs text-muted-foreground">(deixe em branco para usar a automática)</span></Label>
-                <Input placeholder={entryMencaoFinalAuto ?? "—"} value={entry.mencao} onChange={e => setEntry(x => ({ ...x, mencao: e.target.value }))} />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea rows={1} value={entry.observacoes} onChange={e => setEntry(x => ({ ...x, observacoes: e.target.value }))} />
-              </div>
-
-              <DialogFooter className="flex-wrap gap-2">
-                <Button variant="outline" onClick={() => setSessionOpen(false)}>Encerrar sessão</Button>
-                <Button variant="secondary" onClick={() => salvarEntry(false)} disabled={saving || !entry.militar_id}>
+            ) : (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <Button variant="outline" size="sm" onClick={() => setSessionOpen(false)} className="order-last sm:order-first">Encerrar sessão</Button>
+                <Button variant="secondary" onClick={() => salvarEntry(false)} disabled={saving || !entry.militar_id} className="flex-1 sm:flex-none">
                   {saving ? "Salvando..." : "Registrar próximo"}
                 </Button>
-                <Button onClick={() => salvarEntry(true)} disabled={saving || !entry.militar_id}>
+                <Button onClick={() => salvarEntry(true)} disabled={saving || !entry.militar_id} className="flex-1 sm:flex-none">
                   {saving ? "Salvando..." : "Registrar e concluir"}
                 </Button>
-              </DialogFooter>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── Dialog: edição individual ── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg w-[calc(100%-1rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6 top-2 translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
-          <DialogHeader>
-            <DialogTitle className="font-display tracking-wide">Editar registro</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3 py-1">
+        <DialogContent className="flex flex-col gap-0 p-0 inset-0 h-[100dvh] w-full rounded-none translate-x-0 translate-y-0 top-0 left-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-lg">
+          <div className="flex shrink-0 items-center justify-between border-b px-4 py-3 sm:px-6">
+            <h2 className="font-display text-base font-semibold tracking-wide">Editar registro</h2>
+            <button onClick={() => setEditOpen(false)} className="rounded-sm p-1 opacity-70 hover:opacity-100">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-3">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Militar</Label>
@@ -619,10 +622,13 @@ function RegistrosPage() {
               <Textarea rows={1} value={editForm.observacoes ?? ""} onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))} />
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
-            <Button onClick={salvarEdit} disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar"}</Button>
-          </DialogFooter>
+          </div>
+          <div className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+              <Button onClick={salvarEdit} disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar"}</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -956,6 +962,19 @@ function ExField({ label, exVal, onEx, unit }: { label: string; exVal?: string; 
         <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">{unit}</Label>
         <Input className="h-9" inputMode="numeric" value={exVal ?? ""} onChange={e => onEx(e.target.value)} />
       </div>
+    </div>
+  );
+}
+
+/** Versão compacta usada no wizard mobile */
+function ExFieldCompact({ label, unit, value, onChange }: { label: string; unit: string; value?: string; onChange: (v: string) => void }) {
+  return (
+    <div className="rounded border border-border/70 bg-background px-3 py-2">
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs font-medium text-primary">{label}</span>
+        <span className="text-[10px] text-muted-foreground">{unit}</span>
+      </div>
+      <Input className="h-10 text-base" inputMode="numeric" value={value ?? ""} onChange={e => onChange(e.target.value)} />
     </div>
   );
 }

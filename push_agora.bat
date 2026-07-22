@@ -30,7 +30,7 @@ echo === Status ===
 
 echo.
 echo === Commit ===
-%GIT% commit -m "feat: wizard 2 etapas Registrar TAF, Sec Cmd Su, PMT, logo Tucandeira, sync importacao"
+%GIT% commit -m "fix: dialog registros mobile-first (tela cheia no celular, header+footer fixos, lista colapsada)"
 
 echo.
 echo === Push ===
