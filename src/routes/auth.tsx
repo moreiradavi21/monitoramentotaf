@@ -280,6 +280,38 @@ function AuthPage() {
             </TabsContent>
 
             <TabsContent value="signup" className="mt-4">
+                <Button className="w-full" type="submit" disabled={loading}>
+                  {loading ? "Entrando..." : "Entrar"}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); }}
+                  className="w-full text-center text-xs text-muted-foreground underline"
+                >
+                  Esqueci minha senha
+                </button>
+              </form>
+
+              {forgotOpen && (
+                <form className="mt-3 space-y-2 rounded-md border border-border p-3" onSubmit={handleForgot}>
+                  <Label htmlFor="fp-email" className="text-xs">
+                    Enviaremos um link de recuperação para o e-mail de cadastro
+                  </Label>
+                  <Input
+                    id="fp-email"
+                    type="email"
+                    autoComplete="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                  />
+                  <Button type="submit" size="sm" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : "Enviar link de recuperação"}
+                  </Button>
+                </form>
+              )}
+            </TabsContent>
+
+            <TabsContent value="signup" className="mt-4">
               <form className="space-y-3" onSubmit={handleSignup}>
                 <div className="space-y-1">
                   <Label>Tipo de conta</Label>
