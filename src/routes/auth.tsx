@@ -276,13 +276,6 @@ function AuthPage() {
                 <Button className="w-full" type="submit" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="mt-4">
-                <Button className="w-full" type="submit" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
-                </Button>
                 <button
                   type="button"
                   onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); }}
