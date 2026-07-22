@@ -30,7 +30,7 @@ echo === Status ===
 
 echo.
 echo === Commit ===
-%GIT% commit -m "feat: pagina Cientes + mobile dialog fix + top4 ranking"
+%GIT% commit -m "feat: cientes page, avaliador vê só seus registros, sem aba pendentes"
 
 echo.
 echo === Push ===

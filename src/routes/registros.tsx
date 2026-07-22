@@ -280,7 +280,11 @@ function RegistrosPage() {
 
   // ── Mapas e filtros ──
   const militarById = useMemo(() => new Map(militares.map(m => [m.id, m])), [militares]);
-  const resultadosPorPapel = useMemo(() => isAdmin ? resultados : resultados.filter(r => r.avaliador_id === user?.id || r.avaliador_id === null), [resultados, isAdmin, user?.id]);
+  // Admin vê tudo; Avaliador vê apenas o que ele mesmo registrou (avaliador_id === seu user.id)
+  const resultadosPorPapel = useMemo(
+    () => isAdmin ? resultados : resultados.filter(r => r.avaliador_id === user?.id),
+    [resultados, isAdmin, user?.id],
+  );
   const filtrados = useMemo(() => resultadosPorPapel.filter(r => {
     if (fTaf !== "todos" && r.taf_numero !== Number(fTaf)) return false;
     if (fCh !== "todos" && r.chamada !== Number(fCh)) return false;
@@ -705,20 +709,22 @@ function RegistrosPage() {
         <Card><CardContent className="py-8 text-center text-muted-foreground">Cadastre militares para começar a registrar TAFs.</CardContent></Card>
       )}
 
-      {/* ── Abas: Resultados | Pendentes ── */}
+      {/* ── Abas: Resultados | Pendentes (Pendentes só para Admin) ── */}
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as "resultados" | "pendentes")}>
         <TabsList>
           <TabsTrigger value="resultados" className="gap-2">
             <ClipboardList className="h-4 w-4" />
             Resultados
           </TabsTrigger>
-          <TabsTrigger value="pendentes" className="gap-2">
-            <FileX className="h-4 w-4" />
-            Pendentes
-            {pendentes.length > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[10px]">{pendentes.length}</Badge>
-            )}
-          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="pendentes" className="gap-2">
+              <FileX className="h-4 w-4" />
+              Pendentes
+              {pendentes.length > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[10px]">{pendentes.length}</Badge>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ── Aba Resultados ── */}
@@ -833,8 +839,8 @@ function RegistrosPage() {
 
         </TabsContent>
 
-        {/* ── Aba Pendentes ── */}
-        <TabsContent value="pendentes" className="mt-4 space-y-4">
+        {/* ── Aba Pendentes (somente Admin) ── */}
+        {isAdmin && <TabsContent value="pendentes" className="mt-4 space-y-4">
           {/* Filtros da aba pendentes */}
           <Card>
             <CardContent className="flex flex-wrap gap-2 p-3">
@@ -931,7 +937,7 @@ function RegistrosPage() {
               </table>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
 
       <AlertDialog open={!!confirmDelete} onOpenChange={o => !o && setConfirmDelete(null)}>
