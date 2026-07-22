@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { MailCheck, RefreshCw } from "lucide-react";
+import { MailCheck, RefreshCw } from "lucide-react"; // RefreshCw usado no botão reenviar
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -116,15 +116,13 @@ function AuthPage() {
   // Estado pós-cadastro Companhia: aguardando confirmação de e-mail
   const [emailPendente, setEmailPendente] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0); // segundos restantes
 
   const [militares, setMilitares] = useState<
     { id: string; nome: string; posto: string; disponivel: boolean }[]
   >([]);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [magicLinkMode, setMagicLinkMode] = useState(false);
-  const [magicEmail, setMagicEmail] = useState("");
-  const [magicSent, setMagicSent] = useState(false);
 
   useEffect(() => {
     if (session) navigate({ to: "/" });
@@ -139,28 +137,15 @@ function AuthPage() {
     })();
   }, []);
 
-  async function handleMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = magicEmail.trim();
-    if (!z.string().email().safeParse(trimmed).success) {
-      return toast.error("Informe um e-mail válido.");
-    }
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: trimmed,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          shouldCreateUser: false,
-        },
+  // Inicia o countdown de 60s após envio de e-mail
+  function startCooldown() {
+    setResendCooldown(60);
+    const id = setInterval(() => {
+      setResendCooldown((v) => {
+        if (v <= 1) { clearInterval(id); return 0; }
+        return v - 1;
       });
-      if (error) throw error;
-      setMagicSent(true);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Falha ao enviar o link.");
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   }
 
   async function handleForgot(e: React.FormEvent) {
@@ -200,7 +185,16 @@ function AuthPage() {
       toast.success("Bem-vindo(a)!");
       navigate({ to: "/" });
     } catch (err: any) {
-      toast.error(err?.message ?? "Falha ao entrar.");
+      const msg: string = err?.message ?? "";
+      if (
+        msg.toLowerCase().includes("email not confirmed") ||
+        msg.toLowerCase().includes("not confirmed")
+      ) {
+        // E-mail ainda não confirmado — mostra tela de confirmação pendente
+        setEmailPendente(parsed.data.email);
+      } else {
+        toast.error(msg || "Falha ao entrar.");
+      }
     } finally {
       setLoading(false);
     }
@@ -235,21 +229,11 @@ function AuthPage() {
       });
 
       if (parsed.data.requested_role === "companhia") {
-        // Garante que não há sessão ativa (caso confirmação de e-mail esteja desativada no Supabase)
+        // Garante que não há sessão ativa — usuário deve confirmar e-mail antes de logar
         await supabase.auth.signOut();
-
-        // Envia magic link — funciona independente das configurações do dashboard
-        const { error: otpErr } = await supabase.auth.signInWithOtp({
-          email: parsed.data.email,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            shouldCreateUser: false, // conta já foi criada acima
-          },
-        });
-        if (otpErr) throw otpErr;
-
-        // Exibe tela "Verifique seu e-mail"
+        // Exibe tela "Verifique seu e-mail" e inicia cooldown de reenvio
         setEmailPendente(parsed.data.email);
+        startCooldown();
       } else {
         toast.success(
           "Solicitação enviada! Sua conta ficará ativa após aprovação do administrador.",
@@ -264,18 +248,17 @@ function AuthPage() {
   }
 
   async function handleResend() {
-    if (!emailPendente) return;
+    if (!emailPendente || resendCooldown > 0) return;
     setResendLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.resend({
+        type: "signup",
         email: emailPendente,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          shouldCreateUser: false,
-        },
+        options: { emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) throw error;
-      toast.success("Link reenviado! Verifique sua caixa de entrada.");
+      toast.success("E-mail de confirmação reenviado! Verifique sua caixa de entrada.");
+      startCooldown();
     } catch (err: any) {
       toast.error(err?.message ?? "Falha ao reenviar.");
     } finally {
@@ -283,7 +266,7 @@ function AuthPage() {
     }
   }
 
-  // ── Tela: confirmação de e-mail pendente (só para Companhia) ──
+  // ── Tela: confirmação de e-mail pendente (Companhia ou e-mail não confirmado) ──
   if (emailPendente) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
@@ -294,32 +277,35 @@ function AuthPage() {
             </div>
             <div className="space-y-1">
               <h2 className="font-display text-xl tracking-wide text-primary">
-                Verifique seu e-mail
+                Cadastro realizado com sucesso!
               </h2>
               <p className="text-sm text-muted-foreground">
-                Enviamos um link de confirmação para:
+                Enviamos um e-mail de confirmação para:
               </p>
               <p className="font-medium text-foreground break-all">{emailPendente}</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Clique no link do e-mail para ativar sua conta e acessar o aplicativo. Verifique também a pasta de spam.
+              Acesse sua caixa de entrada e clique no link de confirmação para ativar sua conta. Após confirmar o e-mail, você poderá acessar o sistema normalmente. Verifique também a pasta de spam.
             </p>
             <div className="flex flex-col w-full gap-2">
               <Button
+                className="w-full"
+                onClick={() => { setEmailPendente(null); setTab("login"); }}
+              >
+                Ir para Login
+              </Button>
+              <Button
                 variant="outline"
                 onClick={handleResend}
-                disabled={resendLoading}
+                disabled={resendLoading || resendCooldown > 0}
                 className="w-full gap-2"
               >
                 <RefreshCw className={`h-4 w-4 ${resendLoading ? "animate-spin" : ""}`} />
-                {resendLoading ? "Reenviando..." : "Reenviar link de confirmação"}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full text-muted-foreground"
-                onClick={() => { setEmailPendente(null); setTab("login"); }}
-              >
-                Voltar para o login
+                {resendLoading
+                  ? "Reenviando..."
+                  : resendCooldown > 0
+                    ? `Reenviar e-mail de confirmação (${resendCooldown}s)`
+                    : "Reenviar e-mail de confirmação"}
               </Button>
             </div>
           </CardContent>
@@ -388,17 +374,10 @@ function AuthPage() {
                 </Button>
                 <button
                   type="button"
-                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); setMagicLinkMode(false); }}
+                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); }}
                   className="w-full text-center text-xs text-muted-foreground underline"
                 >
                   Esqueci minha senha
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMagicEmail(email); setMagicLinkMode((v) => !v); setForgotOpen(false); setMagicSent(false); }}
-                  className="w-full text-center text-xs text-muted-foreground underline"
-                >
-                  Entrar com link por e-mail (Cia C Apoio)
                 </button>
               </form>
 
@@ -420,41 +399,6 @@ function AuthPage() {
                 </form>
               )}
 
-              {magicLinkMode && (
-                <div className="mt-3 space-y-2 rounded-md border border-border p-3">
-                  {magicSent ? (
-                    <div className="flex flex-col items-center gap-2 py-2 text-center">
-                      <MailCheck className="h-7 w-7 text-primary" />
-                      <p className="text-sm font-medium">Link enviado!</p>
-                      <p className="text-xs text-muted-foreground">Verifique seu e-mail e clique no link para entrar.</p>
-                      <button
-                        type="button"
-                        className="text-xs text-muted-foreground underline"
-                        onClick={() => { setMagicSent(false); setMagicEmail(""); }}
-                      >
-                        Enviar para outro e-mail
-                      </button>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleMagicLink} className="space-y-2">
-                      <Label htmlFor="ml-email" className="text-xs">
-                        Militares da Cia C Apoio — entrar sem senha via link no e-mail
-                      </Label>
-                      <Input
-                        id="ml-email"
-                        type="email"
-                        autoComplete="email"
-                        placeholder="seu@email.com"
-                        value={magicEmail}
-                        onChange={(e) => setMagicEmail(e.target.value)}
-                      />
-                      <Button type="submit" size="sm" className="w-full" disabled={loading}>
-                        {loading ? "Enviando..." : "Enviar link de acesso"}
-                      </Button>
-                    </form>
-                  )}
-                </div>
-              )}
             </TabsContent>
 
             <TabsContent value="signup" className="mt-4">
