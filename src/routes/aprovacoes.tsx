@@ -298,6 +298,17 @@ function AprovacoesPage() {
                 >
                   {p.approved ? "Ativo" : "Pendente"}
                 </Badge>
+                {!p.approved && (
+                  <Button
+                    size="sm"
+                    onClick={() => approve.mutate({ id: p.id, role: "companhia" })}
+                    disabled={approve.isPending}
+                    className="shrink-0"
+                  >
+                    <UserCheck className="mr-1 h-4 w-4" />
+                    Aprovar
+                  </Button>
+                )}
                 {p.approved && (
                   <Button
                     size="sm"

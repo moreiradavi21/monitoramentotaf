@@ -30,7 +30,7 @@ echo === Status ===
 
 echo.
 echo === Commit ===
-%GIT% commit -m "feat: admin pode excluir contas, auto-aprovacao companhia, cientes, magic link"
+%GIT% commit -m "fix: botao aprovar companhia pendente + entrar com link por email"
 
 echo.
 echo === Push ===

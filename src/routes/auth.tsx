@@ -122,6 +122,9 @@ function AuthPage() {
   >([]);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+  const [magicLinkMode, setMagicLinkMode] = useState(false);
+  const [magicEmail, setMagicEmail] = useState("");
+  const [magicSent, setMagicSent] = useState(false);
 
   useEffect(() => {
     if (session) navigate({ to: "/" });
@@ -135,6 +138,30 @@ function AuthPage() {
       if (Array.isArray(data)) setMilitares(data as any);
     })();
   }, []);
+
+  async function handleMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = magicEmail.trim();
+    if (!z.string().email().safeParse(trimmed).success) {
+      return toast.error("Informe um e-mail válido.");
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          shouldCreateUser: false,
+        },
+      });
+      if (error) throw error;
+      setMagicSent(true);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao enviar o link.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
@@ -361,10 +388,17 @@ function AuthPage() {
                 </Button>
                 <button
                   type="button"
-                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); }}
+                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); setMagicLinkMode(false); }}
                   className="w-full text-center text-xs text-muted-foreground underline"
                 >
                   Esqueci minha senha
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMagicEmail(email); setMagicLinkMode((v) => !v); setForgotOpen(false); setMagicSent(false); }}
+                  className="w-full text-center text-xs text-muted-foreground underline"
+                >
+                  Entrar com link por e-mail (Cia C Apoio)
                 </button>
               </form>
 
@@ -384,6 +418,42 @@ function AuthPage() {
                     {loading ? "Enviando..." : "Enviar link de recuperação"}
                   </Button>
                 </form>
+              )}
+
+              {magicLinkMode && (
+                <div className="mt-3 space-y-2 rounded-md border border-border p-3">
+                  {magicSent ? (
+                    <div className="flex flex-col items-center gap-2 py-2 text-center">
+                      <MailCheck className="h-7 w-7 text-primary" />
+                      <p className="text-sm font-medium">Link enviado!</p>
+                      <p className="text-xs text-muted-foreground">Verifique seu e-mail e clique no link para entrar.</p>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground underline"
+                        onClick={() => { setMagicSent(false); setMagicEmail(""); }}
+                      >
+                        Enviar para outro e-mail
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleMagicLink} className="space-y-2">
+                      <Label htmlFor="ml-email" className="text-xs">
+                        Militares da Cia C Apoio — entrar sem senha via link no e-mail
+                      </Label>
+                      <Input
+                        id="ml-email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="seu@email.com"
+                        value={magicEmail}
+                        onChange={(e) => setMagicEmail(e.target.value)}
+                      />
+                      <Button type="submit" size="sm" className="w-full" disabled={loading}>
+                        {loading ? "Enviando..." : "Enviar link de acesso"}
+                      </Button>
+                    </form>
+                  )}
+                </div>
               )}
             </TabsContent>
 
