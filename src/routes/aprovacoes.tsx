@@ -124,7 +124,8 @@ function AprovacoesPage() {
 
   // ── Aprovados separados por grupo ──
   const approvedStaff = profiles.filter((p) => p.approved && isStaff(p.requested_role));
-  const approvedCia   = profiles.filter((p) => p.approved && !isStaff(p.requested_role));
+  // Companhia: mostra TODAS (aprovadas ou não) — contas antigas podem ter approved=false
+  const allCia = profiles.filter((p) => !isStaff(p.requested_role));
 
   function ApprovedRow({ p }: { p: Row }) {
     return (
@@ -264,25 +265,64 @@ function AprovacoesPage() {
         </CardContent>
       </Card>
 
-      {/* ── Militares da Cia C Apoio (auto-aprovados) ── */}
+      {/* ── Militares da Cia C Apoio ── */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <CardTitle className="font-display tracking-wide text-primary">
               Militares da Cia C Apoio
-              <Badge variant="outline" className="ml-2 font-normal">{approvedCia.length}</Badge>
+              <Badge variant="outline" className="ml-2 font-normal">{allCia.length}</Badge>
             </CardTitle>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Contas auto-aprovadas no cadastro. Aqui você pode revogar o acesso se necessário.
+            Contas cadastradas como Cia C Apoio. Use "Excluir" para remover uma conta e liberar o e-mail para novo cadastro.
           </p>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {approvedCia.length === 0 && (
+          {allCia.length === 0 && (
             <p className="text-sm text-muted-foreground">Nenhum militar da Cia cadastrado ainda.</p>
           )}
-          {approvedCia.map((p) => <ApprovedRow key={p.id} p={p} />)}
+          {allCia.map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
+              <div className="min-w-0">
+                <div className="font-medium truncate">{p.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">{p.posto ?? "—"}</div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge
+                  variant="outline"
+                  className={p.approved
+                    ? "border-green-400/50 text-green-600 dark:text-green-400"
+                    : "border-amber-400/50 text-amber-600 dark:text-amber-400"}
+                >
+                  {p.approved ? "Ativo" : "Pendente"}
+                </Badge>
+                {p.approved && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => revoke.mutate(p.id)}
+                    disabled={revoke.isPending}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <UserX className="mr-1 h-4 w-4" />
+                    Revogar
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConfirmDeleteId(p.id)}
+                  disabled={deleteUser.isPending}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="mr-1 h-4 w-4" />
+                  Excluir
+                </Button>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
       {/* Diálogo de confirmação de exclusão */}
