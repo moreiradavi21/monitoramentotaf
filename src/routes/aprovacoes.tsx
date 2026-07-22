@@ -284,7 +284,7 @@ function AprovacoesPage() {
             </CardTitle>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Contas cadastradas como Cia C Apoio. Use "Excluir" para remover uma conta e liberar o e-mail para novo cadastro.
+            Contas cadastradas como Cia C Apoio. Use "Aprovar" para liberar acesso ou "Excluir" para remover o perfil.
           </p>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">

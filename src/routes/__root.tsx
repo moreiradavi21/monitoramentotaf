@@ -9,7 +9,7 @@ import {
   Scripts,
   Link,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -27,6 +27,20 @@ import {
   ShieldCheck,
   Upload,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 
 function NotFoundComponent() {
@@ -239,6 +253,125 @@ function BottomNav() {
   );
 }
 
+// ── Tela de completar cadastro (perfil foi deletado mas auth.users existe) ──
+const POSTOS_CIA = [
+  "AL", "Recruta", "Soldado", "Cabo",
+  "3° SGT", "2° SGT", "1° SGT", "Subtenente",
+  "Aspirante", "2° Tenente", "1° Tenente", "Capitão",
+] as const;
+
+function CompleteProfile({ userId, onComplete }: { userId: string; onComplete: () => Promise<void> }) {
+  const [nome, setNome] = useState("");
+  const [posto, setPosto] = useState("");
+  const [militarId, setMilitarId] = useState("");
+  const [militares, setMilitares] = useState<{ id: string; nome: string; posto: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const auth = useAuth();
+
+  useEffect(() => {
+    supabase
+      .from("militares_disponiveis" as any)
+      .select("id, nome, posto")
+      .then(({ data }) => { if (Array.isArray(data)) setMilitares(data as any); });
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nome.trim() || !posto || !militarId) {
+      toast.error("Preencha todos os campos.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("profiles" as any).upsert({
+        id: userId,
+        nome: nome.trim(),
+        posto,
+        requested_role: "companhia",
+        approved: false,
+        militar_id: militarId,
+      });
+      if (error) throw error;
+      setDone(true);
+      toast.success("Dados salvos! Aguarde a aprovação do administrador.");
+      await onComplete();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao salvar dados.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="mx-auto max-w-lg py-16 text-center px-4">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <ShieldCheck className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="font-display text-2xl text-primary">Cadastro enviado!</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Aguarde a aprovação do administrador para acessar o sistema.
+        </p>
+        <Button variant="outline" className="mt-4" onClick={auth.signOut}>Sair</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center py-8 px-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="font-display tracking-wide text-primary">
+            Complete seu cadastro
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Seu perfil foi removido. Preencha os dados para solicitar novo acesso.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-3" onSubmit={handleSubmit}>
+            <div className="space-y-1">
+              <Label>Nome completo</Label>
+              <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" />
+            </div>
+            <div className="space-y-1">
+              <Label>Posto/Graduação</Label>
+              <Select value={posto} onValueChange={(v) => { setPosto(v); setMilitarId(""); }}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {POSTOS_CIA.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {posto && (
+              <div className="space-y-1">
+                <Label>Seu nome na lista de militares</Label>
+                <Select value={militarId} onValueChange={setMilitarId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {militares
+                      .filter((m) => !posto || m.posto === posto || true)
+                      .map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.nome} — {m.posto}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Button className="w-full" type="submit" disabled={loading}>
+              {loading ? "Salvando..." : "Enviar para aprovação"}
+            </Button>
+            <Button variant="ghost" className="w-full text-muted-foreground" type="button" onClick={auth.signOut}>
+              Sair
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function AppGate({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -263,6 +396,11 @@ function AppGate({ children }: { children: ReactNode }) {
 
   if (isPublicPage) return <>{children}</>;
 
+  // Logado mas sem perfil (perfil deletado pelo admin, auth.users ainda existe)
+  if (!auth.profile) {
+    return <CompleteProfile userId={auth.user.id} onComplete={auth.refreshProfile} />;
+  }
+
   if (!auth.approved) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center px-4">
@@ -276,14 +414,12 @@ function AppGate({ children }: { children: ReactNode }) {
           Sua conta foi criada com sucesso, mas ainda precisa da aprovação de um
           administrador para acessar o sistema.
         </p>
+        <Button variant="outline" className="mt-4" onClick={auth.signOut}>Sair</Button>
       </div>
     );
   }
 
-  // Role-based redirect from home:
-  // - Companhia (role="user") → /meus-resultados
-  // - Avaliador puro (role="avaliador", not admin) → /registros
-  // - Admin → fica no / (dashboard)
+  // Role-based redirect from home
   if (pathname === "/") {
     if (auth.isCompanhia) return <Navigate to="/meus-resultados" replace />;
     if (auth.role === "avaliador") return <Navigate to="/registros" replace />;
