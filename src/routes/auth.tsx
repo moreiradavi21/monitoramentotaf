@@ -25,6 +25,9 @@ export const Route = createFileRoute("/auth")({
 
 const POSTOS_MILITARES = [
   "AL",
+  "Recruta",
+  "Soldado",
+  "Cabo",
   "3° SGT",
   "2° SGT",
   "1° SGT",
@@ -43,9 +46,19 @@ const POSTOS_AVAL_ADMIN = POSTOS_MILITARES.filter(
     p === "Sub Tenente",
 );
 
+// Mapeia o posto selecionado no cadastro para as categorias da tabela `militares`.
+function categoriasParaPosto(posto: string): string[] {
+  if (["Capitão", "1° Tenente", "2° Tenente", "Aspirante"].includes(posto))
+    return ["oficial"];
+  if (["Sub Tenente", "1° SGT", "2° SGT", "3° SGT"].includes(posto))
+    return ["sargento"];
+  if (["AL", "Cabo", "Soldado", "Recruta"].includes(posto))
+    return ["cabo", "soldado", "recruta"];
+  return [];
+}
 
 const REQUESTED_ROLES = [
-  { value: "companhia", label: "Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF." },
+  { value: "companhia", label: "Militares da Cia C Apoio", desc: "Visualiza os índices e dá ciente no próprio TAF." },
   { value: "avaliador", label: "Militar Avaliador", desc: "Lança e edita os resultados do TAF (requer aprovação)." },
   { value: "administrador", label: "Militar Administrador", desc: "Gerencia militares, TAF e aprovações (requer aprovação)." },
 ] as const;
@@ -281,7 +294,7 @@ function AuthPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label>Posto/Graduação</Label>
-                    <Select value={posto} onValueChange={setPosto}>
+                    <Select value={posto} onValueChange={(v) => { setPosto(v); setMilitarId(""); }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
@@ -308,29 +321,44 @@ function AuthPage() {
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {POSTOS.map((cat) => {
-                            const list = militares.filter(
-                              (m) => m.posto === cat.value,
-                            );
-                            if (!list.length) return null;
-                            return (
-                              <div key={cat.value}>
-                                <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                                  {postoPlural(cat.value as any)}
+                          {(() => {
+                            const cats = categoriasParaPosto(posto);
+                            if (!posto) {
+                              return (
+                                <div className="px-2 py-3 text-xs text-muted-foreground">
+                                  Selecione primeiro o posto/graduação.
                                 </div>
-                                {list.map((m) => (
-                                  <SelectItem key={m.id} value={m.id}>
-                                    {m.nome}
-                                  </SelectItem>
-                                ))}
-                              </div>
+                              );
+                            }
+                            const grupos = POSTOS.filter((c) => cats.includes(c.value));
+                            const total = grupos.reduce(
+                              (n, cat) => n + militares.filter((m) => m.posto === cat.value).length,
+                              0,
                             );
-                          })}
-                          {militares.length === 0 && (
-                            <div className="px-2 py-3 text-xs text-muted-foreground">
-                              Nenhum militar disponível.
-                            </div>
-                          )}
+                            if (total === 0) {
+                              return (
+                                <div className="px-2 py-3 text-xs text-muted-foreground">
+                                  Nenhum militar disponível.
+                                </div>
+                              );
+                            }
+                            return grupos.map((cat) => {
+                              const list = militares.filter((m) => m.posto === cat.value);
+                              if (!list.length) return null;
+                              return (
+                                <div key={cat.value}>
+                                  <div className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                                    {postoPlural(cat.value as any)}
+                                  </div>
+                                  {list.map((m) => (
+                                    <SelectItem key={m.id} value={m.id}>
+                                      {m.nome}
+                                    </SelectItem>
+                                  ))}
+                                </div>
+                              );
+                            });
+                          })()}
                         </SelectContent>
                       </Select>
                     </div>
