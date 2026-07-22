@@ -230,6 +230,15 @@ export type Database = {
         Returns: undefined
       }
       marcar_ciente: { Args: { _resultado_id: string }; Returns: undefined }
+      militares_disponiveis: {
+        Args: never
+        Returns: {
+          disponivel: boolean
+          id: string
+          nome: string
+          posto: string
+        }[]
+      }
       revoke_profile: { Args: { _profile_id: string }; Returns: undefined }
     }
     Enums: {
