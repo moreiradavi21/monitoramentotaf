@@ -257,11 +257,11 @@ function AppGate({ children }: { children: ReactNode }) {
   }
 
   if (!auth.user) {
-    if (isAuthPage) return <>{children}</>;
+    if (isPublicPage) return <>{children}</>;
     return <Navigate to="/auth" replace />;
   }
 
-  if (isAuthPage) return <>{children}</>;
+  if (isPublicPage) return <>{children}</>;
 
   if (!auth.approved) {
     return (
