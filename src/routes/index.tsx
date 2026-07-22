@@ -22,13 +22,31 @@ function isInsuf(mencao: string | null | undefined): boolean {
   return m === "I" || m === "INSUF" || m === "INSUFICIENTE";
 }
 
-const MEDAL_COLORS = ["text-yellow-500", "text-slate-400", "text-amber-700"];
+const MEDAL_COLORS = [
+  "text-yellow-500",
+  "text-slate-400",
+  "text-amber-700",
+  "text-primary/70",
+];
 const MEDAL_BG = [
   "bg-yellow-500/10 border-yellow-500/40",
   "bg-slate-400/10 border-slate-400/30",
   "bg-amber-700/10 border-amber-700/30",
+  "bg-muted/40 border-border",
 ];
-const RANK_LABEL = ["1º", "2º", "3º"];
+const RANK_LABEL = ["1º", "2º", "3º", "4º"];
+
+const MENCAO_SCORE_MAP: Record<string, number> = {
+  E: 5, EXCELENTE: 5,
+  MB: 4, "MUITO BOM": 4,
+  B: 3, BOM: 3,
+  R: 2, REGULAR: 2, SUF: 2,
+  I: 1, INSUF: 1, INSUFICIENTE: 1,
+};
+function mencaoScore(m: string | null | undefined): number {
+  if (!m) return 0;
+  return MENCAO_SCORE_MAP[m.trim().toUpperCase()] ?? 0;
+}
 
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
@@ -69,28 +87,30 @@ function Dashboard() {
     });
   }, [militares, resultsForEdicao]);
 
-  // Top 3 Cabos e Soldados — média das notas de todos os exercícios
-  const top3 = useMemo(() => {
-    const cabosESoldados = militares.filter(
-      (m) => m.posto === "cabo" || m.posto === "soldado",
+  // Top 4 Cabos, Soldados e Recrutas — ranking por menção final, depois por soma de exercícios
+  const top4 = useMemo(() => {
+    const elegíveis = militares.filter(
+      (m) => m.posto === "cabo" || m.posto === "soldado" || m.posto === "recruta",
     );
-    return cabosESoldados
+    return elegíveis
       .map((militar) => {
         const r = resultsForEdicao.find((x) => x.militar_id === militar.id);
         if (!r) return null;
-        const notas = [r.nota_corrida, r.nota_flexao, r.nota_abdominal, r.nota_barra].filter(
-          (n): n is number => n != null,
-        );
-        if (!notas.length) return null;
-        const media = notas.reduce((a, b) => a + b, 0) / notas.length;
-        return { militar, r, media };
+        const score = mencaoScore(r.mencao);
+        if (!score) return null; // sem menção registrada
+        const exercTotal =
+          (r.corrida_metros ?? 0) +
+          (r.flexao ?? 0) * 10 + // peso para desempate
+          (r.abdominal ?? 0) * 10 +
+          (r.barra ?? 0) * 10;
+        return { militar, r, score, exercTotal };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null)
-      .sort((a, b) => b.media - a.media)
-      .slice(0, 3);
+      .sort((a, b) => b.score - a.score || b.exercTotal - a.exercTotal)
+      .slice(0, 4);
   }, [resultsForEdicao, militares]);
 
-  const hasTop3 = top3.length > 0;
+  const hasTop4 = top4.length > 0;
 
   const totalMilitares = militares.length;
   const totalRealizados = resultsForEdicao.length;
@@ -191,14 +211,14 @@ function Dashboard() {
         />
       </div>
 
-      {/* ── Top 3 Cabos e Soldados ───────────────────────────────── */}
-      {(hasTop3 || loading) && (
+      {/* ── Top 4 Cabos, Soldados e Recrutas ────────────────────── */}
+      {(hasTop4 || loading) && (
         <Card className="border-border/70">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-yellow-500" />
               <CardTitle className="font-display text-lg tracking-wide text-primary">
-                Top 3 — Cabos e Soldados
+                Top 4 — Cabos, Soldados e Recrutas
               </CardTitle>
               <span className="ml-1 text-xs text-muted-foreground">
                 {taf}º TAF · {chamada}ª Chamada
@@ -208,71 +228,74 @@ function Dashboard() {
           <CardContent>
             {loading ? (
               <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : top3.length === 0 ? (
+            ) : top4.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Sem resultados de Cabos/Soldados nesta edição.
+                Sem resultados de Cabos/Soldados/Recrutas nesta edição.
               </p>
             ) : (
               <div className="space-y-3">
-                {top3.map(({ militar, r, media }, idx) => (
-                  <div
-                    key={militar.id}
-                    className={`flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
-                  >
-                    {/* Posição */}
-                    <span className={`w-7 shrink-0 text-center text-lg font-bold ${MEDAL_COLORS[idx]}`}>
-                      {RANK_LABEL[idx]}
-                    </span>
+                {top4.map(({ militar, r, score }, idx) => {
+                  const postoLabel = POSTOS.find(p => p.value === militar.posto)?.label ?? militar.posto;
+                  return (
+                    <div
+                      key={militar.id}
+                      className={`flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 ${MEDAL_BG[idx]}`}
+                    >
+                      {/* Posição */}
+                      <span className={`w-7 shrink-0 text-center text-lg font-bold ${MEDAL_COLORS[idx]}`}>
+                        {RANK_LABEL[idx]}
+                      </span>
 
-                    {/* Nome e posto */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium leading-tight">
-                        {militar.nome_guerra ?? militar.nome}
-                      </p>
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {militar.posto}
-                      </p>
-                    </div>
+                      {/* Nome e posto */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium leading-tight">
+                          {militar.nome_guerra ?? militar.nome}
+                        </p>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          {postoLabel}
+                        </p>
+                      </div>
 
-                    {/* Índices numéricos por exercício */}
-                    <div className="flex flex-wrap gap-3 text-center">
-                      {[
-                        { label: "Corrida", value: r.corrida_metros, unit: "m" },
-                        { label: "Flexão", value: r.flexao, unit: "rep" },
-                        { label: "Abdom.", value: r.abdominal, unit: "rep" },
-                        { label: "Barra", value: r.barra, unit: "rep" },
-                      ].map(({ label, value, unit }) => (
-                        <div key={label} className="min-w-[52px]">
-                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                            {label}
-                          </p>
-                          <p className="font-display text-base text-primary">
-                            {value ?? "—"}
-                            {value != null && (
-                              <span className="ml-0.5 text-[10px] text-muted-foreground">
-                                {unit}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                      {/* Índices numéricos por exercício */}
+                      <div className="flex flex-wrap gap-3 text-center">
+                        {[
+                          { label: "Corrida", value: r.corrida_metros, unit: "m" },
+                          { label: "Flexão", value: r.flexao, unit: "rep" },
+                          { label: "Abdom.", value: r.abdominal, unit: "rep" },
+                          { label: "Barra", value: r.barra, unit: "rep" },
+                        ].map(({ label, value, unit }) => (
+                          <div key={label} className="min-w-[52px]">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              {label}
+                            </p>
+                            <p className="font-display text-base text-primary">
+                              {value ?? "—"}
+                              {value != null && (
+                                <span className="ml-0.5 text-[10px] text-muted-foreground">
+                                  {unit}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
 
-                    {/* Média das notas */}
-                    <div className="ml-auto text-right">
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                        Média
-                      </p>
-                      <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>
-                        {media.toFixed(1)}
-                      </p>
+                      {/* Menção final */}
+                      <div className="ml-auto text-right">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Menção
+                        </p>
+                        <span className={`inline-block rounded border px-2 py-0.5 font-display text-lg ${mencaoColor(r.mencao)}`}>
+                          {r.mencao ?? "—"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -354,53 +377,6 @@ function Dashboard() {
         )}
       </div>
 
-      {resultsForEdicao.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-display text-lg tracking-wide text-primary">
-              Resultados desta edição
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[600px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-widest text-muted-foreground">
-                <tr className="border-b border-border">
-                  <th className="py-2">Militar</th>
-                  <th className="py-2">Categoria</th>
-                  <th className="py-2">Data</th>
-                  <th className="py-2 text-right">Nota</th>
-                  <th className="py-2">Menção</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultsForEdicao.map((r) => {
-                  const m = militares.find((x) => x.id === r.militar_id);
-                  const p = POSTOS.find((x) => x.value === m?.posto);
-                  return (
-                    <tr key={r.id} className="border-b border-border/50">
-                      <td className="py-2 font-medium">{m?.nome ?? "—"}</td>
-                      <td className="py-2 text-muted-foreground">{p?.label ?? "—"}</td>
-                      <td className="py-2 text-muted-foreground">
-                        {new Date(r.data_aplicacao).toLocaleDateString("pt-BR")}
-                      </td>
-                      <td className="py-2 text-right font-display text-base text-primary">
-                        {r.nota_final != null ? Number(r.nota_final).toFixed(2) : "—"}
-                      </td>
-                      <td className="py-2">
-                        <span
-                          className={`inline-block rounded border px-2 py-0.5 text-xs ${mencaoColor(r.mencao)}`}
-                        >
-                          {r.mencao ?? "—"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
