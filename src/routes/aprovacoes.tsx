@@ -70,6 +70,24 @@ function AprovacoesPage() {
 
   const [pickedRole, setPickedRole] = useState<Record<string, string>>({});
 
+  // IDs excluídos localmente — persistidos no localStorage para não reaparecerem no refresh
+  const [locallyDeleted, setLocallyDeleted] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("taf_deleted_profiles");
+      return new Set(JSON.parse(stored ?? "[]"));
+    } catch {
+      return new Set();
+    }
+  });
+
+  function markDeleted(id: string) {
+    setLocallyDeleted((prev) => {
+      const next = new Set([...prev, id]);
+      localStorage.setItem("taf_deleted_profiles", JSON.stringify([...next]));
+      return next;
+    });
+  }
+
   const approve = useMutation({
     mutationFn: async ({ id, role }: { id: string; role: string }) => {
       const dbRole =
@@ -112,11 +130,11 @@ function AprovacoesPage() {
       return id;
     },
     onSuccess: (deletedId) => {
-      // Remove da cache imediatamente; no próximo fetch não reaparece (approved=false filtrado)
+      markDeleted(deletedId as string);
       qc.setQueryData(["profiles"], (old: Row[] = []) =>
         old.filter((p) => p.id !== deletedId),
       );
-      toast.success("Conta desativada e removida do sistema.");
+      toast.success("Conta excluída.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir conta."),
   });
@@ -130,10 +148,14 @@ function AprovacoesPage() {
 
   // ── Aprovados separados por grupo ──
   const approvedStaff = profiles.filter((p) => p.approved && isStaff(p.requested_role));
-  // Companhia ativas (approved=true) — as com approved=false foram desativadas via revoke_profile
-  const activeCia = profiles.filter((p) => !isStaff(p.requested_role) && p.approved);
+  // Companhia ativas (approved=true) — excluindo IDs deletados localmente
+  const activeCia = profiles.filter(
+    (p) => !isStaff(p.requested_role) && p.approved && !locallyDeleted.has(p.id),
+  );
   // Companhia pendentes (approved=false) — criadas antes da migração de auto-aprovação
-  const pendingCia = profiles.filter((p) => !isStaff(p.requested_role) && !p.approved);
+  const pendingCia = profiles.filter(
+    (p) => !isStaff(p.requested_role) && !p.approved && !locallyDeleted.has(p.id),
+  );
 
   function ApprovedRow({ p }: { p: Row }) {
     return (
