@@ -113,21 +113,45 @@ function AuthPage() {
   const [militarId, setMilitarId] = useState<string>("");
 
   const [militares, setMilitares] = useState<
-    { id: string; nome: string; posto: string }[]
+    { id: string; nome: string; posto: string; disponivel: boolean }[]
   >([]);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   useEffect(() => {
     if (session) navigate({ to: "/" });
   }, [session, navigate]);
 
-  // Carrega lista de militares (leitura pública indisponível — usamos RPC?)
-  // A tabela agora exige aprovação; para o cadastro exibimos via função pública.
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("militares_publicos" as any).select("id, nome, posto");
+      const { data } = await supabase
+        .from("militares_disponiveis" as any)
+        .select("id, nome, posto, disponivel");
       if (Array.isArray(data)) setMilitares(data as any);
     })();
   }, []);
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    const email = forgotEmail.trim();
+    if (!z.string().email().safeParse(email).success) {
+      return toast.error("Informe um e-mail válido.");
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link de recuperação para o seu e-mail.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao enviar o e-mail.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const postoOptions = useMemo(
     () => (requestedRole === "companhia" ? POSTOS_MILITARES : POSTOS_AVAL_ADMIN),
