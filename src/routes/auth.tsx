@@ -31,7 +31,7 @@ const POSTOS_MILITARES = [
   "3° SGT",
   "2° SGT",
   "1° SGT",
-  "Sub Tenente",
+  "Subtenente",
   "Aspirante",
   "2° Tenente",
   "1° Tenente",
@@ -43,14 +43,14 @@ const POSTOS_AVAL_ADMIN = POSTOS_MILITARES.filter(
     p === "AL" ||
     p.includes("SGT") ||
     p.includes("Tenente") ||
-    p === "Sub Tenente",
+    p === "Subtenente",
 );
 
 // Mapeia o posto selecionado no cadastro para as categorias da tabela `militares`.
 function categoriasParaPosto(posto: string): string[] {
   if (["Capitão", "1° Tenente", "2° Tenente", "Aspirante"].includes(posto))
     return ["oficial"];
-  if (["Sub Tenente", "1° SGT", "2° SGT", "3° SGT"].includes(posto))
+  if (["Subtenente", "1° SGT", "2° SGT", "3° SGT"].includes(posto))
     return ["sargento"];
   if (["AL", "Cabo", "Soldado", "Recruta"].includes(posto))
     return ["cabo", "soldado", "recruta"];
