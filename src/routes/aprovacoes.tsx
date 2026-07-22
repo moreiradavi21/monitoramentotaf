@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserCheck, UserX, ShieldCheck, Users } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, Users, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,16 @@ import {
 } from "@/components/ui/select";
 import { RequireAdmin } from "@/components/require-admin";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/aprovacoes")({
   component: () => (
@@ -91,6 +101,22 @@ function AprovacoesPage() {
     onError: (e: any) => toast.error(e?.message ?? "Falha ao revogar."),
   });
 
+  const deleteUser = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("admin_delete_user" as any, {
+        _user_id: id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profiles"] });
+      toast.success("Conta excluída com sucesso.");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir conta."),
+  });
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   const isStaff = (r: string | null) => r === "avaliador" || r === "administrador";
 
   // ── Pendentes: só avaliador/admin aguardam aprovação manual ──
@@ -118,6 +144,16 @@ function AprovacoesPage() {
           >
             <UserX className="mr-1 h-4 w-4" />
             Revogar
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setConfirmDeleteId(p.id)}
+            disabled={deleteUser.isPending}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="mr-1 h-4 w-4" />
+            Excluir
           </Button>
         </div>
       </div>
@@ -192,6 +228,16 @@ function AprovacoesPage() {
                     <UserCheck className="mr-1 h-4 w-4" />
                     Aprovar
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setConfirmDeleteId(p.id)}
+                    disabled={deleteUser.isPending}
+                    className="shrink-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Excluir
+                  </Button>
                 </div>
               </div>
             );
@@ -239,6 +285,31 @@ function AprovacoesPage() {
           {approvedCia.map((p) => <ApprovedRow key={p.id} p={p} />)}
         </CardContent>
       </Card>
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A conta será removida do sistema e o e-mail ficará disponível para novo cadastro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeleteId) {
+                  deleteUser.mutate(confirmDeleteId);
+                  setConfirmDeleteId(null);
+                }
+              }}
+            >
+              Excluir conta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
