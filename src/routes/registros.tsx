@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search, ChevronRight, RotateCcw } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search, ChevronRight, RotateCcw, ClipboardList, FileX } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -129,10 +130,24 @@ function RegistrosPage() {
   // ── Estado: confirmar remoção ──
   const [confirmDelete, setConfirmDelete] = useState<TafResultado | null>(null);
 
-  // ── Filtros ──
+  // ── Abas ──
+  const [activeTab, setActiveTab] = useState<"resultados" | "pendentes">("resultados");
+
+  // ── Filtros (resultados) ──
   const [fTaf, setFTaf] = useState<string>("todos");
   const [fCh, setFCh] = useState<string>("todos");
   const [fPosto, setFPosto] = useState<string>("todos");
+
+  // ── Filtros (pendentes) ──
+  const [pTaf, setPTaf] = useState<number>(1);
+  const [pCh, setPCh] = useState<number>(1);
+  const [pPosto, setPPosto] = useState<string>("todos");
+
+  // ── Justificativa ──
+  const [justOpen, setJustOpen] = useState(false);
+  const [justMilitar, setJustMilitar] = useState<import("@/lib/data").Militar | null>(null);
+  const [justText, setJustText] = useState("");
+  const [justSaving, setJustSaving] = useState(false);
 
   // ── Helpers ──
   const num = (v: string) => { if (!v) return null; const n = Number(v.replace(",", ".")); return isNaN(n) ? null : n; };
@@ -272,6 +287,44 @@ function RegistrosPage() {
     if (fPosto !== "todos" && militarById.get(r.militar_id)?.posto !== fPosto) return false;
     return true;
   }), [resultadosPorPapel, fTaf, fCh, fPosto, militarById]);
+
+  // ── Pendentes: militares sem resultado na edição selecionada ──
+  const pendentes = useMemo(() => {
+    const comResultado = new Set(
+      resultados.filter(r => r.taf_numero === pTaf && r.chamada === pCh).map(r => r.militar_id)
+    );
+    return militares
+      .filter(m => !comResultado.has(m.id))
+      .filter(m => pPosto === "todos" || m.posto === pPosto);
+  }, [militares, resultados, pTaf, pCh, pPosto]);
+
+  // ── Salvar justificativa (cria resultado DISPENSADO) ──
+  async function salvarJustificativa() {
+    if (!justMilitar) return;
+    if (!justText.trim()) { toast.error("Informe a justificativa."); return; }
+    setJustSaving(true);
+    try {
+      await save.mutateAsync({
+        militar_id: justMilitar.id,
+        taf_numero: pTaf,
+        chamada: pCh,
+        data_aplicacao: new Date().toISOString().slice(0, 10),
+        flexao: null, abdominal: null, corrida_metros: null, barra: null,
+        nota_flexao: null, nota_abdominal: null, nota_corrida: null, nota_barra: null, nota_final: null,
+        mencao: "DISPENSADO",
+        observacoes: justText.trim(),
+        avaliador_id: user?.id ?? null,
+      });
+      toast.success(`Justificativa registrada para ${justMilitar.nome_guerra ?? justMilitar.nome}.`);
+      setJustOpen(false);
+      setJustText("");
+      setJustMilitar(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao salvar justificativa.");
+    } finally {
+      setJustSaving(false);
+    }
+  }
 
   function exportarPlanilha() {
     const rows = filtrados.map(r => {
@@ -608,28 +661,80 @@ function RegistrosPage() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Dialog: justificativa ── */}
+      <Dialog open={justOpen} onOpenChange={o => { if (!o) { setJustOpen(false); setJustText(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display tracking-wide">Justificativa de Dispensa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {justMilitar && (
+              <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                <span className="font-medium">{justMilitar.nome}</span>
+                {justMilitar.nome_guerra && <span className="ml-2 text-muted-foreground">({justMilitar.nome_guerra})</span>}
+                <div className="mt-0.5 text-xs text-muted-foreground">{pTaf}º TAF · {pCh}ª Chamada</div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Motivo da dispensa</Label>
+              <Textarea
+                rows={3}
+                placeholder="Ex.: Afastado por motivo de saúde, licença, missão externa..."
+                value={justText}
+                onChange={e => setJustText(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setJustOpen(false); setJustText(""); }}>Cancelar</Button>
+            <Button onClick={salvarJustificativa} disabled={justSaving || !justText.trim()}>
+              {justSaving ? "Salvando..." : "Registrar dispensa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {militares.length === 0 && (
         <Card><CardContent className="py-8 text-center text-muted-foreground">Cadastre militares para começar a registrar TAFs.</CardContent></Card>
       )}
 
-      {/* Filtros */}
-      <Card>
-        <CardContent className="flex flex-wrap gap-2 p-3">
-          <Select value={fTaf} onValueChange={setFTaf}>
-            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="todos">Todos TAFs</SelectItem>{TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={fCh} onValueChange={setFCh}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="todos">Todas chamadas</SelectItem>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={fPosto} onValueChange={setFPosto}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="todos">Todas categorias</SelectItem>{POSTOS.map(p => <SelectItem key={p.value} value={p.value}>{p.plural}</SelectItem>)}</SelectContent>
-          </Select>
-          <div className="ml-auto flex items-center"><Badge variant="outline">{filtrados.length} registro(s)</Badge></div>
-        </CardContent>
-      </Card>
+      {/* ── Abas: Resultados | Pendentes ── */}
+      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as "resultados" | "pendentes")}>
+        <TabsList>
+          <TabsTrigger value="resultados" className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Resultados
+          </TabsTrigger>
+          <TabsTrigger value="pendentes" className="gap-2">
+            <FileX className="h-4 w-4" />
+            Pendentes
+            {pendentes.length > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[10px]">{pendentes.length}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── Aba Resultados ── */}
+        <TabsContent value="resultados" className="mt-4 space-y-4">
+          {/* Filtros */}
+          <Card>
+            <CardContent className="flex flex-wrap gap-2 p-3">
+              <Select value={fTaf} onValueChange={setFTaf}>
+                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="todos">Todos TAFs</SelectItem>{TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={fCh} onValueChange={setFCh}>
+                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="todos">Todas chamadas</SelectItem>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={fPosto} onValueChange={setFPosto}>
+                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="todos">Todas categorias</SelectItem>{POSTOS.map(p => <SelectItem key={p.value} value={p.value}>{p.plural}</SelectItem>)}</SelectContent>
+              </Select>
+              <div className="ml-auto flex items-center"><Badge variant="outline">{filtrados.length} registro(s)</Badge></div>
+            </CardContent>
+          </Card>
 
       {/* ── MOBILE: cards ── */}
       <div className="md:hidden space-y-3">
@@ -719,6 +824,109 @@ function RegistrosPage() {
           </table>
         </CardContent>
       </Card>
+
+        </TabsContent>
+
+        {/* ── Aba Pendentes ── */}
+        <TabsContent value="pendentes" className="mt-4 space-y-4">
+          {/* Filtros da aba pendentes */}
+          <Card>
+            <CardContent className="flex flex-wrap gap-2 p-3">
+              <Select value={String(pTaf)} onValueChange={v => setPTaf(Number(v))}>
+                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={String(pCh)} onValueChange={v => setPCh(Number(v))}>
+                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={pPosto} onValueChange={setPPosto}>
+                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="todos">Todas categorias</SelectItem>{POSTOS.map(p => <SelectItem key={p.value} value={p.value}>{p.plural}</SelectItem>)}</SelectContent>
+              </Select>
+              <div className="ml-auto flex items-center">
+                <Badge variant={pendentes.length > 0 ? "destructive" : "outline"}>{pendentes.length} pendente(s)</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Lista pendentes — mobile */}
+          <div className="md:hidden space-y-3">
+            {isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Carregando...</p>}
+            {!isLoading && pendentes.length === 0 && (
+              <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">
+                Todos os militares realizaram ou foram dispensados do {pTaf}º TAF · {pCh}ª Chamada.
+              </CardContent></Card>
+            )}
+            {pendentes.map(m => (
+              <Card key={m.id} className="border-border/70">
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{m.nome}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {m.nome_guerra ?? "—"} · {POSTOS.find(p => p.value === m.posto)?.label ?? m.posto}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setJustMilitar(m); setJustText(""); setJustOpen(true); }}
+                  >
+                    <FileX className="mr-1.5 h-3.5 w-3.5" />
+                    Justificar
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Lista pendentes — desktop */}
+          <Card className="hidden md:block">
+            <CardHeader className="pb-2">
+              <CardTitle className="font-display text-lg tracking-wide text-primary">
+                Militares sem registro — {pTaf}º TAF · {pCh}ª Chamada
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto p-0">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
+                    <th className="px-3 py-2">Militar</th>
+                    <th className="px-3 py-2">Nome de guerra</th>
+                    <th className="px-3 py-2">Categoria</th>
+                    <th className="px-3 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Carregando...</td></tr>}
+                  {!isLoading && pendentes.length === 0 && (
+                    <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                      Todos os militares realizaram ou foram dispensados do {pTaf}º TAF · {pCh}ª Chamada.
+                    </td></tr>
+                  )}
+                  {pendentes.map(m => (
+                    <tr key={m.id} className="border-b border-border/50 hover:bg-muted/40">
+                      <td className="px-3 py-2 font-medium">{m.nome}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{m.nome_guerra ?? "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{POSTOS.find(p => p.value === m.posto)?.label ?? m.posto}</td>
+                      <td className="px-3 py-2 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setJustMilitar(m); setJustText(""); setJustOpen(true); }}
+                        >
+                          <FileX className="mr-1.5 h-3.5 w-3.5" />
+                          Justificar dispensa
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={!!confirmDelete} onOpenChange={o => !o && setConfirmDelete(null)}>
         <AlertDialogContent>

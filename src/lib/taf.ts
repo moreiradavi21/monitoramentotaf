@@ -62,6 +62,8 @@ export function mencaoColor(mencao: string | null | undefined): string {
     case "I":
     case "INSUF":
       return "bg-destructive/15 text-destructive border-destructive/40";
+    case "DISPENSADO":
+      return "bg-orange-500/10 text-orange-600 border-orange-400/40";
     default:
       return "bg-muted text-muted-foreground border-border";
   }
