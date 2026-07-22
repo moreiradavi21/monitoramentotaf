@@ -185,6 +185,12 @@ function AuthPage() {
       militar_id: requestedRole === "companhia" ? militarId : null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (parsed.data.requested_role === "companhia" && parsed.data.militar_id) {
+      const m = militares.find((x) => x.id === parsed.data.militar_id);
+      if (m && !m.disponivel) {
+        return toast.error("Este militar já possui uma conta registrada.");
+      }
+    }
     setLoading(true);
     try {
       await signUp({
