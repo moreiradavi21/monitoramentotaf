@@ -90,6 +90,13 @@ export type Database = {
             foreignKeyName: "profiles_militar_id_fkey"
             columns: ["militar_id"]
             isOneToOne: false
+            referencedRelation: "militares_disponiveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_militar_id_fkey"
+            columns: ["militar_id"]
+            isOneToOne: false
             referencedRelation: "militares_publicos"
             referencedColumns: ["id"]
           },
@@ -174,6 +181,13 @@ export type Database = {
             foreignKeyName: "taf_resultados_militar_id_fkey"
             columns: ["militar_id"]
             isOneToOne: false
+            referencedRelation: "militares_disponiveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taf_resultados_militar_id_fkey"
+            columns: ["militar_id"]
+            isOneToOne: false
             referencedRelation: "militares_publicos"
             referencedColumns: ["id"]
           },
@@ -202,6 +216,27 @@ export type Database = {
       }
     }
     Views: {
+      militares_disponiveis: {
+        Row: {
+          disponivel: boolean | null
+          id: string | null
+          nome: string | null
+          posto: Database["public"]["Enums"]["posto_graduacao"] | null
+        }
+        Insert: {
+          disponivel?: never
+          id?: string | null
+          nome?: string | null
+          posto?: Database["public"]["Enums"]["posto_graduacao"] | null
+        }
+        Update: {
+          disponivel?: never
+          id?: string | null
+          nome?: string | null
+          posto?: Database["public"]["Enums"]["posto_graduacao"] | null
+        }
+        Relationships: []
+      }
       militares_publicos: {
         Row: {
           id: string | null

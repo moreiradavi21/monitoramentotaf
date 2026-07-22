@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegistrosRouteImport } from './routes/registros'
 import { Route as MilitaresRouteImport } from './routes/militares'
 import { Route as MeusResultadosRouteImport } from './routes/meus-resultados'
@@ -19,6 +20,11 @@ import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PelotaoPelotaoIdRouteImport } from './routes/pelotao.$pelotaoId'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegistrosRoute = RegistrosRouteImport.update({
   id: '/registros',
   path: '/registros',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/pelotao/$pelotaoId': typeof PelotaoPelotaoIdRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/pelotao/$pelotaoId': typeof PelotaoPelotaoIdRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/meus-resultados': typeof MeusResultadosRoute
   '/militares': typeof MilitaresRoute
   '/registros': typeof RegistrosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/pelotao/$pelotaoId': typeof PelotaoPelotaoIdRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/meus-resultados'
     | '/militares'
     | '/registros'
+    | '/reset-password'
     | '/pelotao/$pelotaoId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/meus-resultados'
     | '/militares'
     | '/registros'
+    | '/reset-password'
     | '/pelotao/$pelotaoId'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/meus-resultados'
     | '/militares'
     | '/registros'
+    | '/reset-password'
     | '/pelotao/$pelotaoId'
   fileRoutesById: FileRoutesById
 }
@@ -144,11 +156,19 @@ export interface RootRouteChildren {
   MeusResultadosRoute: typeof MeusResultadosRoute
   MilitaresRoute: typeof MilitaresRoute
   RegistrosRoute: typeof RegistrosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   PelotaoPelotaoIdRoute: typeof PelotaoPelotaoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/registros': {
       id: '/registros'
       path: '/registros'
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeusResultadosRoute: MeusResultadosRoute,
   MilitaresRoute: MilitaresRoute,
   RegistrosRoute: RegistrosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   PelotaoPelotaoIdRoute: PelotaoPelotaoIdRoute,
 }
 export const routeTree = rootRouteImport

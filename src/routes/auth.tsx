@@ -113,21 +113,45 @@ function AuthPage() {
   const [militarId, setMilitarId] = useState<string>("");
 
   const [militares, setMilitares] = useState<
-    { id: string; nome: string; posto: string }[]
+    { id: string; nome: string; posto: string; disponivel: boolean }[]
   >([]);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   useEffect(() => {
     if (session) navigate({ to: "/" });
   }, [session, navigate]);
 
-  // Carrega lista de militares (leitura pública indisponível — usamos RPC?)
-  // A tabela agora exige aprovação; para o cadastro exibimos via função pública.
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("militares_publicos" as any).select("id, nome, posto");
+      const { data } = await supabase
+        .from("militares_disponiveis" as any)
+        .select("id, nome, posto, disponivel");
       if (Array.isArray(data)) setMilitares(data as any);
     })();
   }, []);
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    const email = forgotEmail.trim();
+    if (!z.string().email().safeParse(email).success) {
+      return toast.error("Informe um e-mail válido.");
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link de recuperação para o seu e-mail.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao enviar o e-mail.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const postoOptions = useMemo(
     () => (requestedRole === "companhia" ? POSTOS_MILITARES : POSTOS_AVAL_ADMIN),
@@ -161,6 +185,12 @@ function AuthPage() {
       militar_id: requestedRole === "companhia" ? militarId : null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (parsed.data.requested_role === "companhia" && parsed.data.militar_id) {
+      const m = militares.find((x) => x.id === parsed.data.militar_id);
+      if (m && !m.disponivel) {
+        return toast.error("Este militar já possui uma conta registrada.");
+      }
+    }
     setLoading(true);
     try {
       await signUp({
@@ -246,7 +276,32 @@ function AuthPage() {
                 <Button className="w-full" type="submit" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => { setForgotEmail(email); setForgotOpen((v) => !v); }}
+                  className="w-full text-center text-xs text-muted-foreground underline"
+                >
+                  Esqueci minha senha
+                </button>
               </form>
+
+              {forgotOpen && (
+                <form className="mt-3 space-y-2 rounded-md border border-border p-3" onSubmit={handleForgot}>
+                  <Label htmlFor="fp-email" className="text-xs">
+                    Enviaremos um link de recuperação para o e-mail de cadastro
+                  </Label>
+                  <Input
+                    id="fp-email"
+                    type="email"
+                    autoComplete="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                  />
+                  <Button type="submit" size="sm" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : "Enviar link de recuperação"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="signup" className="mt-4">
@@ -351,8 +406,13 @@ function AuthPage() {
                                     {postoPlural(cat.value as any)}
                                   </div>
                                   {list.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>
+                                    <SelectItem
+                                      key={m.id}
+                                      value={m.id}
+                                      disabled={!m.disponivel}
+                                    >
                                       {m.nome}
+                                      {!m.disponivel && " (já registrado)"}
                                     </SelectItem>
                                   ))}
                                 </div>
