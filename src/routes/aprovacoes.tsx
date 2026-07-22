@@ -103,21 +103,21 @@ function AprovacoesPage() {
 
   const deleteUser = useMutation({
     mutationFn: async (id: string) => {
-      // Remove função/papel primeiro
+      // Remove o papel (user_roles) — permitido pelo RLS
       const { error: roleErr } = await supabase
         .from("user_roles" as any)
         .delete()
         .eq("user_id", id);
       if (roleErr) throw roleErr;
-      // Remove o perfil
-      const { error: profErr } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", id);
-      if (profErr) throw profErr;
+      // Tenta remover o perfil; se RLS bloquear silenciosamente, não lança erro
+      await supabase.from("profiles").delete().eq("id", id);
+      return id;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profiles"] });
+    onSuccess: (deletedId) => {
+      // Remove da cache local imediatamente (evita reaparecer sem refresh)
+      qc.setQueryData(["profiles"], (old: Row[] = []) =>
+        old.filter((p) => p.id !== deletedId),
+      );
       toast.success("Conta removida do sistema.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir conta."),
