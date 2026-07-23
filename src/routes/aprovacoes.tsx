@@ -121,17 +121,10 @@ function AprovacoesPage() {
 
   const deleteUser = useMutation({
     mutationFn: async (id: string) => {
-      // Tenta deleção completa via admin_delete_user (requer migração aplicada)
       const { error } = await supabase.rpc("admin_delete_user" as any, {
         _user_id: id,
       });
-      if (error) {
-        // Fallback: revoke_profile desativa a conta (sem deletar auth.users)
-        const { error: revokeErr } = await supabase.rpc("revoke_profile" as any, {
-          _profile_id: id,
-        });
-        if (revokeErr) throw revokeErr;
-      }
+      if (error) throw error;
       return id;
     },
     onSuccess: (deletedId) => {
@@ -139,6 +132,7 @@ function AprovacoesPage() {
       qc.setQueryData(["profiles"], (old: Row[] = []) =>
         old.filter((p) => p.id !== deletedId),
       );
+      qc.invalidateQueries({ queryKey: ["profiles"] });
       toast.success("Conta excluída.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir conta."),

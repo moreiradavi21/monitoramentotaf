@@ -257,6 +257,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       approve_profile: {
         Args: {
           _profile_id: string
