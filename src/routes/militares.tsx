@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-import { POSTOS, PELOTOES, pelotaoLabel, postoLabel, type Posto } from "@/lib/taf";
+import { POSTOS, PELOTOES, CATEGORIAS_TAF, pelotaoLabel, postoLabel, type Posto } from "@/lib/taf";
 import {
   useDeleteMilitar,
   useMilitares,
@@ -295,6 +295,7 @@ function MilitaresPage() {
   const [pelotao, setPelotao] = useState<string>("");
   const [ident, setIdent] = useState("");
   const [dataNasc, setDataNasc] = useState("");
+  const [categoriaTaf, setCategoriaTaf] = useState<string>("belico_masculino");
 
   function openNew() {
     setEditing(null);
@@ -304,6 +305,7 @@ function MilitaresPage() {
     setPelotao("");
     setIdent("");
     setDataNasc("");
+    setCategoriaTaf("belico_masculino");
     setOpen(true);
   }
 
@@ -315,6 +317,7 @@ function MilitaresPage() {
     setPelotao(m.pelotao ?? "");
     setIdent(m.identificacao ?? "");
     setDataNasc(m.data_nascimento ?? "");
+    setCategoriaTaf(m.categoria_taf ?? "belico_masculino");
     setOpen(true);
   }
 
@@ -332,6 +335,7 @@ function MilitaresPage() {
         pelotao: pelotao || null,
         identificacao: ident.trim() || null,
         data_nascimento: dataNasc || null,
+        categoria_taf: categoriaTaf || "belico_masculino",
       });
       toast.success(editing ? "Militar atualizado." : "Militar cadastrado.");
       setOpen(false);
@@ -478,6 +482,21 @@ function MilitaresPage() {
                     onChange={(e) => setDataNasc(e.target.value)}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Categoria TAF</Label>
+                <Select value={categoriaTaf} onValueChange={setCategoriaTaf}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS_TAF.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <p className="text-xs text-muted-foreground">
                 A data de nascimento é usada para calcular automaticamente a menção do TAF por faixa etária.

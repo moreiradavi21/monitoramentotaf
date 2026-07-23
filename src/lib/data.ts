@@ -10,6 +10,7 @@ export type Militar = {
   identificacao: string | null;
   data_nascimento: string | null;
   pelotao: string | null;
+  categoria_taf: string | null;
   created_at: string;
 };
 
@@ -76,6 +77,7 @@ export function useSaveMilitar() {
       identificacao?: string | null;
       data_nascimento?: string | null;
       pelotao?: string | null;
+      categoria_taf?: string | null;
     }) => {
       const payload = {
         nome: m.nome,
@@ -84,6 +86,7 @@ export function useSaveMilitar() {
         identificacao: m.identificacao ?? null,
         data_nascimento: m.data_nascimento ?? null,
         pelotao: m.pelotao ?? null,
+        categoria_taf: m.categoria_taf ?? "belico_masculino",
       };
       if (m.id) {
         const { error } = await supabase

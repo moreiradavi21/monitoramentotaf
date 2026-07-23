@@ -128,3 +128,31 @@ export function mencaoMedia(
   if (avg >= 1.5) return { label: "Regular", short: "R", score: avg };
   return { label: "Insuficiente", short: "I", score: avg };
 }
+
+// ── Categorias TAF ────────────────────────────────────────────────────────────
+
+export const CATEGORIAS_TAF = [
+  { value: "belico_masculino", label: "Bélico Masculino" },
+  { value: "belico_feminino", label: "Bélico Feminino" },
+  { value: "saude_masculino", label: "Saúde Masculino" },
+  { value: "saude_feminino", label: "Saúde Feminino" },
+] as const;
+
+export type CategoriaTaf = (typeof CATEGORIAS_TAF)[number]["value"];
+
+export const categoriaTafLabel = (c: string | null | undefined): string =>
+  CATEGORIAS_TAF.find((x) => x.value === c)?.label ?? (c ?? "—");
+
+/** Retorna true se a categoria inclui exercício de Barra Fixa. */
+export const categoriaTafTemBarra = (c: string | null | undefined): boolean =>
+  c === "belico_masculino" || c === "belico_feminino" || !c;
+
+/**
+ * Para Bélico Feminino, idades 40-49 a barra é sustentação (segundos),
+ * não repetições.
+ */
+export const barraEhSustentacao = (
+  c: string | null | undefined,
+  idade: number | null | undefined,
+): boolean =>
+  c === "belico_feminino" && idade != null && idade >= 40 && idade <= 49;

@@ -46,6 +46,8 @@ import {
   mencaoColor,
   extractMencoes,
   postoLabel,
+  categoriaTafTemBarra,
+  barraEhSustentacao,
   type Posto,
 } from "@/lib/taf";
 import { calcIdade, mencaoPorIdade, mencaoFinalDe } from "@/lib/indices";
@@ -155,23 +157,29 @@ function RegistrosPage() {
   // ── Menções automáticas para o entry (wizard) ──
   const entryMilitar = militares.find(m => m.id === entry.militar_id);
   const entryIdade = calcIdade(entryMilitar?.data_nascimento ?? null, session.data_aplicacao);
+  const entryCategoria = entryMilitar?.categoria_taf ?? "belico_masculino";
+  const entryTemBarra = categoriaTafTemBarra(entryCategoria);
+  const entryBarraSustentacao = barraEhSustentacao(entryCategoria, entryIdade);
   const entryMencoesAuto = useMemo(() => ({
-    FLEX: mencaoPorIdade("flexao", entryIdade, num(entry.flexao)),
-    ABD: mencaoPorIdade("abdominal", entryIdade, num(entry.abdominal)),
-    COR: mencaoPorIdade("corrida", entryIdade, num(entry.corrida_metros)),
-    BAR: mencaoPorIdade("barra", entryIdade, num(entry.barra)),
-  }), [entryIdade, entry.flexao, entry.abdominal, entry.corrida_metros, entry.barra]);
+    FLEX: mencaoPorIdade("flexao", entryIdade, num(entry.flexao), entryCategoria),
+    ABD: mencaoPorIdade("abdominal", entryIdade, num(entry.abdominal), entryCategoria),
+    COR: mencaoPorIdade("corrida", entryIdade, num(entry.corrida_metros), entryCategoria),
+    BAR: entryTemBarra ? mencaoPorIdade("barra", entryIdade, num(entry.barra), entryCategoria) : null,
+  }), [entryIdade, entry.flexao, entry.abdominal, entry.corrida_metros, entry.barra, entryCategoria, entryTemBarra]);
   const entryMencaoFinalAuto = useMemo(() => mencaoFinalDe([entryMencoesAuto.FLEX, entryMencoesAuto.ABD, entryMencoesAuto.COR, entryMencoesAuto.BAR]), [entryMencoesAuto]);
 
   // ── Menções automáticas para edição ──
   const editMilitar = militares.find(m => m.id === editForm.militar_id);
   const editIdade = calcIdade(editMilitar?.data_nascimento ?? null, editForm.data_aplicacao);
+  const editCategoria = editMilitar?.categoria_taf ?? "belico_masculino";
+  const editTemBarra = categoriaTafTemBarra(editCategoria);
+  const editBarraSustentacao = barraEhSustentacao(editCategoria, editIdade);
   const editMencoesAuto = useMemo(() => ({
-    FLEX: mencaoPorIdade("flexao", editIdade, num(editForm.flexao ?? "")),
-    ABD: mencaoPorIdade("abdominal", editIdade, num(editForm.abdominal ?? "")),
-    COR: mencaoPorIdade("corrida", editIdade, num(editForm.corrida_metros ?? "")),
-    BAR: mencaoPorIdade("barra", editIdade, num(editForm.barra ?? "")),
-  }), [editIdade, editForm.flexao, editForm.abdominal, editForm.corrida_metros, editForm.barra]);
+    FLEX: mencaoPorIdade("flexao", editIdade, num(editForm.flexao ?? ""), editCategoria),
+    ABD: mencaoPorIdade("abdominal", editIdade, num(editForm.abdominal ?? ""), editCategoria),
+    COR: mencaoPorIdade("corrida", editIdade, num(editForm.corrida_metros ?? ""), editCategoria),
+    BAR: editTemBarra ? mencaoPorIdade("barra", editIdade, num(editForm.barra ?? ""), editCategoria) : null,
+  }), [editIdade, editForm.flexao, editForm.abdominal, editForm.corrida_metros, editForm.barra, editCategoria, editTemBarra]);
   const editMencaoFinalAuto = useMemo(() => mencaoFinalDe([editMencoesAuto.FLEX, editMencoesAuto.ABD, editMencoesAuto.COR, editMencoesAuto.BAR]), [editMencoesAuto]);
 
   // ── Abrir wizard ──
@@ -489,20 +497,30 @@ function RegistrosPage() {
                 {/* Exercícios — grade 2×2 compacta */}
                 <div>
                   <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">Exercícios</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid gap-2 ${entryTemBarra ? "grid-cols-2" : "grid-cols-2"}`}>
                     <ExFieldCompact label="Flexão" unit="rep." value={entry.flexao} onChange={v => setEntry(e => ({ ...e, flexao: v }))} />
                     <ExFieldCompact label="Abdominal" unit="rep." value={entry.abdominal} onChange={v => setEntry(e => ({ ...e, abdominal: v }))} />
                     <ExFieldCompact label="Corrida" unit="m" value={entry.corrida_metros} onChange={v => setEntry(e => ({ ...e, corrida_metros: v }))} />
-                    <ExFieldCompact label="Barra" unit="rep." value={entry.barra} onChange={v => setEntry(e => ({ ...e, barra: v }))} />
+                    {entryTemBarra && (
+                      <ExFieldCompact
+                        label={entryBarraSustentacao ? "Sustentação" : "Barra"}
+                        unit={entryBarraSustentacao ? "seg." : "rep."}
+                        value={entry.barra}
+                        onChange={v => setEntry(e => ({ ...e, barra: v }))}
+                      />
+                    )}
                   </div>
                 </div>
 
                 {/* Menções automáticas — linha compacta */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs">
                   <span className="text-muted-foreground">Auto{entryIdade != null ? ` (${entryIdade}a)` : ""}:</span>
-                  {(["COR","FLEX","ABD","BAR"] as const).map(k => (
+                  {(["COR","FLEX","ABD"] as const).map(k => (
                     <span key={k} className="tabular-nums">{k} <b>{entryMencoesAuto[k] ?? "—"}</b></span>
                   ))}
+                  {entryTemBarra && (
+                    <span className="tabular-nums">BAR <b>{entryMencoesAuto.BAR ?? "—"}</b></span>
+                  )}
                   <span className="ml-auto font-semibold text-primary">Final: {entryMencaoFinalAuto ?? "—"}</span>
                 </div>
 
@@ -603,17 +621,25 @@ function RegistrosPage() {
             </div>
             <div className="rounded-md border border-border bg-muted/30 p-3">
               <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Exercícios</p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className={`grid gap-3 ${editTemBarra ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3"}`}>
                 <ExField label="Flexão" unit="rep." exVal={editForm.flexao} onEx={v => setEditForm(f => ({ ...f, flexao: v }))} />
                 <ExField label="Abdominal" unit="rep." exVal={editForm.abdominal} onEx={v => setEditForm(f => ({ ...f, abdominal: v }))} />
                 <ExField label="Corrida" unit="m" exVal={editForm.corrida_metros} onEx={v => setEditForm(f => ({ ...f, corrida_metros: v }))} />
-                <ExField label="Barra" unit="rep." exVal={editForm.barra} onEx={v => setEditForm(f => ({ ...f, barra: v }))} />
+                {editTemBarra && (
+                  <ExField
+                    label={editBarraSustentacao ? "Sustentação" : "Barra"}
+                    unit={editBarraSustentacao ? "seg." : "rep."}
+                    exVal={editForm.barra}
+                    onEx={v => setEditForm(f => ({ ...f, barra: v }))}
+                  />
+                )}
               </div>
             </div>
             <div className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs">
               <p className="mb-1 uppercase tracking-widest text-muted-foreground">Menções automáticas por idade{editIdade != null ? ` — ${editIdade} anos` : ""}</p>
               <div className="flex flex-wrap gap-3">
-                {(["COR", "FLEX", "ABD", "BAR"] as const).map(k => <span key={k}>{k}: <b>{editMencoesAuto[k] ?? "—"}</b></span>)}
+                {(["COR", "FLEX", "ABD"] as const).map(k => <span key={k}>{k}: <b>{editMencoesAuto[k] ?? "—"}</b></span>)}
+                {editTemBarra && <span>BAR: <b>{editMencoesAuto.BAR ?? "—"}</b></span>}
                 <span className="ml-auto font-medium">Final: <b>{editMencaoFinalAuto ?? "—"}</b></span>
               </div>
             </div>
