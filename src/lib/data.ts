@@ -2,6 +2,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Posto } from "./taf";
 
+// ── Cache local para categoria_taf ──────────────────────────────────────────
+// Fallback via localStorage enquanto o cache de schema do PostgREST não inclui
+// a coluna categoria_taf. Quando a coluna for reconhecida pelo Supabase, os
+// valores do localStorage têm precedência sobre o DB (merge transparente).
+
+const LS_KEY = "taf_categoria_taf_cache";
+
+function _lcGet(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "{}"); } catch { return {}; }
+}
+function _lcSet(id: string, v: string) {
+  const c = _lcGet(); c[id] = v;
+  localStorage.setItem(LS_KEY, JSON.stringify(c));
+}
+function _lcRead(id: string): string | null { return _lcGet()[id] ?? null; }
+
 export type Militar = {
   id: string;
   nome: string;
@@ -47,7 +63,13 @@ export function useMilitares() {
         .select("*")
         .order("nome");
       if (error) throw error;
-      return (data ?? []) as Militar[];
+      // Mescla categoria_taf do localStorage (fallback enquanto PostgREST não
+      // reconhece a coluna no schema cache).
+      const cache = _lcGet();
+      return ((data ?? []) as any[]).map((m): Militar => ({
+        ...m,
+        categoria_taf: (m.categoria_taf as string | null) ?? cache[m.id] ?? null,
+      }));
     },
   });
 }
@@ -79,31 +101,65 @@ export function useSaveMilitar() {
       pelotao?: string | null;
       categoria_taf?: string | null;
     }) => {
-      const payload = {
+      const categoria = m.categoria_taf ?? "belico_masculino";
+
+      // Payload base (sem categoria_taf — evita erro de schema cache do PostgREST)
+      const basePayload = {
         nome: m.nome,
         nome_guerra: m.nome_guerra ?? null,
         posto: m.posto,
         identificacao: m.identificacao ?? null,
         data_nascimento: m.data_nascimento ?? null,
         pelotao: m.pelotao ?? null,
-        categoria_taf: m.categoria_taf ?? "belico_masculino",
       };
+
+      let savedId: string;
+
       if (m.id) {
+        // Tenta salvar com categoria_taf no banco; se falhar (schema cache),
+        // salva apenas o payload base e persiste a categoria no localStorage.
         const { error } = await supabase
           .from("militares")
-          .update(payload)
+          .update({ ...basePayload, categoria_taf: categoria } as any)
           .eq("id", m.id);
-        if (error) throw error;
-        return { id: m.id };
+        if (error) {
+          if (error.message?.includes("categoria_taf") || error.code === "PGRST204") {
+            const { error: e2 } = await supabase
+              .from("militares")
+              .update(basePayload)
+              .eq("id", m.id);
+            if (e2) throw e2;
+          } else {
+            throw error;
+          }
+        }
+        savedId = m.id;
       } else {
         const { data, error } = await supabase
           .from("militares")
-          .insert(payload)
+          .insert({ ...basePayload, categoria_taf: categoria } as any)
           .select("id")
           .single();
-        if (error) throw error;
-        return data as { id: string };
+        if (error) {
+          if (error.message?.includes("categoria_taf") || error.code === "PGRST204") {
+            const { data: d2, error: e2 } = await supabase
+              .from("militares")
+              .insert(basePayload)
+              .select("id")
+              .single();
+            if (e2) throw e2;
+            savedId = (d2 as { id: string }).id;
+          } else {
+            throw error;
+          }
+        } else {
+          savedId = (data as { id: string }).id;
+        }
       }
+
+      // Persiste categoria no localStorage (funciona mesmo sem a coluna no DB)
+      _lcSet(savedId!, categoria);
+      return { id: savedId! };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["militares"] }),
   });
