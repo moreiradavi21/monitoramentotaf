@@ -1,0 +1,1 @@
+ALTER TABLE public.militares ADD COLUMN IF NOT EXISTS categoria_taf text NOT NULL DEFAULT 'belico_masculino'; NOTIFY pgrst, 'reload schema';

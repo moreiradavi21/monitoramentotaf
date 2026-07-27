@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       militares: {
         Row: {
+          categoria_taf: string
           created_at: string
           data_nascimento: string | null
           id: string
@@ -26,6 +27,7 @@ export type Database = {
           posto: Database["public"]["Enums"]["posto_graduacao"]
         }
         Insert: {
+          categoria_taf?: string
           created_at?: string
           data_nascimento?: string | null
           id?: string
@@ -36,6 +38,7 @@ export type Database = {
           posto: Database["public"]["Enums"]["posto_graduacao"]
         }
         Update: {
+          categoria_taf?: string
           created_at?: string
           data_nascimento?: string | null
           id?: string

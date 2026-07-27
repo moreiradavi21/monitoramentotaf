@@ -63,13 +63,13 @@ export function useMilitares() {
         .select("*")
         .order("nome");
       if (error) throw error;
-      // Mescla categoria_taf do localStorage (fallback enquanto PostgREST não
-      // reconhece a coluna no schema cache).
+      // DB é fonte da verdade; localStorage só se DB não retornar valor.
       const cache = _lcGet();
       return ((data ?? []) as any[]).map((m): Militar => ({
         ...m,
         categoria_taf: (m.categoria_taf as string | null) ?? cache[m.id] ?? null,
       }));
+
     },
   });
 }
@@ -101,69 +101,40 @@ export function useSaveMilitar() {
       pelotao?: string | null;
       categoria_taf?: string | null;
     }) => {
-      const categoria = m.categoria_taf ?? "belico_masculino";
-
-      // Payload base (sem categoria_taf — evita erro de schema cache do PostgREST)
-      const basePayload = {
+      const payload = {
         nome: m.nome,
         nome_guerra: m.nome_guerra ?? null,
         posto: m.posto,
         identificacao: m.identificacao ?? null,
         data_nascimento: m.data_nascimento ?? null,
         pelotao: m.pelotao ?? null,
+        categoria_taf: m.categoria_taf ?? "belico_masculino",
       };
 
       let savedId: string;
-
       if (m.id) {
-        // Tenta salvar com categoria_taf no banco; se falhar (schema cache),
-        // salva apenas o payload base e persiste a categoria no localStorage.
         const { error } = await supabase
           .from("militares")
-          .update({ ...basePayload, categoria_taf: categoria } as any)
+          .update(payload as any)
           .eq("id", m.id);
-        if (error) {
-          if (error.message?.includes("categoria_taf") || error.code === "PGRST204") {
-            const { error: e2 } = await supabase
-              .from("militares")
-              .update(basePayload)
-              .eq("id", m.id);
-            if (e2) throw e2;
-          } else {
-            throw error;
-          }
-        }
+        if (error) throw error;
         savedId = m.id;
       } else {
         const { data, error } = await supabase
           .from("militares")
-          .insert({ ...basePayload, categoria_taf: categoria } as any)
+          .insert(payload as any)
           .select("id")
           .single();
-        if (error) {
-          if (error.message?.includes("categoria_taf") || error.code === "PGRST204") {
-            const { data: d2, error: e2 } = await supabase
-              .from("militares")
-              .insert(basePayload)
-              .select("id")
-              .single();
-            if (e2) throw e2;
-            savedId = (d2 as { id: string }).id;
-          } else {
-            throw error;
-          }
-        } else {
-          savedId = (data as { id: string }).id;
-        }
+        if (error) throw error;
+        savedId = (data as { id: string }).id;
       }
-
-      // Persiste categoria no localStorage (funciona mesmo sem a coluna no DB)
-      _lcSet(savedId!, categoria);
-      return { id: savedId! };
+      _lcSet(savedId, payload.categoria_taf);
+      return { id: savedId };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["militares"] }),
   });
 }
+
 
 export function useDeleteMilitar() {
   const qc = useQueryClient();
