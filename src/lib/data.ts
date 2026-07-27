@@ -63,13 +63,13 @@ export function useMilitares() {
         .select("*")
         .order("nome");
       if (error) throw error;
-      // Mescla categoria_taf do localStorage (fallback enquanto PostgREST não
-      // reconhece a coluna no schema cache).
+      // DB é fonte da verdade; localStorage só se DB não retornar valor.
       const cache = _lcGet();
       return ((data ?? []) as any[]).map((m): Militar => ({
         ...m,
         categoria_taf: (m.categoria_taf as string | null) ?? cache[m.id] ?? null,
       }));
+
     },
   });
 }
