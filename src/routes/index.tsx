@@ -13,6 +13,7 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
+  head: () => ({ meta: [{"title": "Painel TAF | Companhia CCAP"}, {"name": "description", "content": "Acompanhamento dos testes de aptidão física da Companhia CCAP por TAF e chamada."}, {"property": "og:title", "content": "Painel TAF | Companhia CCAP"}, {"property": "og:description", "content": "Acompanhamento dos testes de aptidão física da Companhia CCAP por TAF e chamada."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Dashboard,
 });
 

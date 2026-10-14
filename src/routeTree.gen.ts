@@ -9,50 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegistrosRouteImport } from './routes/registros'
-import { Route as MilitaresRouteImport } from './routes/militares'
-import { Route as MeusResultadosRouteImport } from './routes/meus-resultados'
-import { Route as ImportarRouteImport } from './routes/importar'
-import { Route as CientesRouteImport } from './routes/cientes'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CientesRouteImport } from './routes/cientes'
+import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as MeusResultadosRouteImport } from './routes/meus-resultados'
+import { Route as MilitaresRouteImport } from './routes/militares'
+import { Route as RegistrosRouteImport } from './routes/registros'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PelotaoPelotaoIdRouteImport } from './routes/pelotao.$pelotaoId'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegistrosRoute = RegistrosRouteImport.update({
-  id: '/registros',
-  path: '/registros',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MilitaresRoute = MilitaresRouteImport.update({
-  id: '/militares',
-  path: '/militares',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MeusResultadosRoute = MeusResultadosRouteImport.update({
-  id: '/meus-resultados',
-  path: '/meus-resultados',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImportarRoute = ImportarRouteImport.update({
-  id: '/importar',
-  path: '/importar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CientesRoute = CientesRouteImport.update({
-  id: '/cientes',
-  path: '/cientes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AprovacoesRoute = AprovacoesRouteImport.update({
@@ -60,9 +30,39 @@ const AprovacoesRoute = AprovacoesRouteImport.update({
   path: '/aprovacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CientesRoute = CientesRouteImport.update({
+  id: '/cientes',
+  path: '/cientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportarRoute = ImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeusResultadosRoute = MeusResultadosRouteImport.update({
+  id: '/meus-resultados',
+  path: '/meus-resultados',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MilitaresRoute = MilitaresRouteImport.update({
+  id: '/militares',
+  path: '/militares',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegistrosRoute = RegistrosRouteImport.update({
+  id: '/registros',
+  path: '/registros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PelotaoPelotaoIdRoute = PelotaoPelotaoIdRouteImport.update({
@@ -162,53 +162,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/registros': {
-      id: '/registros'
-      path: '/registros'
-      fullPath: '/registros'
-      preLoaderRoute: typeof RegistrosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/militares': {
-      id: '/militares'
-      path: '/militares'
-      fullPath: '/militares'
-      preLoaderRoute: typeof MilitaresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/meus-resultados': {
-      id: '/meus-resultados'
-      path: '/meus-resultados'
-      fullPath: '/meus-resultados'
-      preLoaderRoute: typeof MeusResultadosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/importar': {
-      id: '/importar'
-      path: '/importar'
-      fullPath: '/importar'
-      preLoaderRoute: typeof ImportarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cientes': {
-      id: '/cientes'
-      path: '/cientes'
-      fullPath: '/cientes'
-      preLoaderRoute: typeof CientesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aprovacoes': {
@@ -218,11 +176,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AprovacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cientes': {
+      id: '/cientes'
+      path: '/cientes'
+      fullPath: '/cientes'
+      preLoaderRoute: typeof CientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/importar': {
+      id: '/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof ImportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meus-resultados': {
+      id: '/meus-resultados'
+      path: '/meus-resultados'
+      fullPath: '/meus-resultados'
+      preLoaderRoute: typeof MeusResultadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/militares': {
+      id: '/militares'
+      path: '/militares'
+      fullPath: '/militares'
+      preLoaderRoute: typeof MilitaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/registros': {
+      id: '/registros'
+      path: '/registros'
+      fullPath: '/registros'
+      preLoaderRoute: typeof RegistrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pelotao/$pelotaoId': {
@@ -250,3 +250,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

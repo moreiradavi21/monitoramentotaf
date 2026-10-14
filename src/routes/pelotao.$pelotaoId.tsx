@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { matchesMilitar } from "@/lib/military-search";
 import {
   ArrowLeft,
   Users,
@@ -33,6 +34,7 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { RequireAdmin } from "@/components/require-admin";
 
 export const Route = createFileRoute("/pelotao/$pelotaoId")({
+  head: () => ({ meta: [{"title": "Pelotão | TAF CCAP"}, {"name": "description", "content": "Resultados de aptidão física e militares do pelotão da Companhia CCAP."}, {"property": "og:title", "content": "Pelotão | TAF CCAP"}, {"property": "og:description", "content": "Resultados de aptidão física e militares do pelotão da Companhia CCAP."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAdmin>
       <PelotaoPage />
@@ -116,13 +118,7 @@ function PelotaoPage() {
 
   // Lista filtrada e ordenada
   const listaMilitares = useMemo(() => {
-    const query = busca.toLowerCase().trim();
-    let list = militares.filter(
-      (m) =>
-        !query ||
-        m.nome.toLowerCase().includes(query) ||
-        (m.nome_guerra ?? "").toLowerCase().includes(query),
-    );
+    let list = militares.filter(m => matchesMilitar(m, busca));
 
     const MENCAO_SCORE: Record<string, number> = {
       E: 5, EXCELENTE: 5, MB: 4, "MUITO BOM": 4,
@@ -321,7 +317,7 @@ function PelotaoPage() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome…"
+                placeholder="Nome completo ou de guerra…"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 className="pl-8"

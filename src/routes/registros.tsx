@@ -4,6 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search, ChevronRight, RotateCcw, ClipboardList, FileX } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { matchesMilitar } from "@/lib/military-search";
+import { TafAbsencesExport } from "@/components/taf-absences-export";
 import { useAuth } from "@/lib/auth";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +65,7 @@ import {
 import { RequireAvaliador } from "@/components/require-admin";
 
 export const Route = createFileRoute("/registros")({
+  head: () => ({ meta: [{"title": "Resultados e não realização | TAF CCAP"}, {"name": "description", "content": "Registros de TAF e planilhas dos militares que não realizaram por chamada e pelotão."}, {"property": "og:title", "content": "Resultados e não realização | TAF CCAP"}, {"property": "og:description", "content": "Registros de TAF e planilhas dos militares que não realizaram por chamada e pelotão."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAvaliador>
       <RegistrosPage />
@@ -101,8 +104,8 @@ const emptyEntry = (): EntryForm => ({ militar_id: "", flexao: "", abdominal: ""
 
 function RegistrosPage() {
   const queryClient = useQueryClient();
-  const { data: militares = [] } = useMilitares();
-  const { data: resultados = [], isLoading } = useResultados();
+  const { data: militares = [], isLoading: militaresLoading, isError: militaresError } = useMilitares();
+  const { data: resultados = [], isLoading, isError: resultadosError } = useResultados();
   const { isAdmin, user } = useAuth();
   const save = useSaveResultado();
   const del = useDeleteResultado();
@@ -370,6 +373,9 @@ function RegistrosPage() {
           </Button>
 
           {isAdmin && (
+            <TafAbsencesExport militares={militares} resultados={resultados} loading={militaresLoading || isLoading || militaresError || resultadosError} />
+          )}
+          {isAdmin && (
             <Button variant="outline" onClick={exportarPlanilha} disabled={filtrados.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               Planilha
@@ -455,15 +461,14 @@ function RegistrosPage() {
                     <div className="space-y-1">
                       <div className="relative">
                         <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 opacity-50" />
-                        <Input value={entrySearch} onChange={e => setEntrySearch(e.target.value)} placeholder="Digite o nome do militar..." className="pl-9 h-11 text-base" autoComplete="off" autoFocus />
+                        <Input value={entrySearch} onChange={e => setEntrySearch(e.target.value)} placeholder="Nome completo ou de guerra..." className="pl-9 h-11 text-base" autoComplete="off" autoFocus />
                       </div>
                       {entrySearch.trim().length === 0 ? (
                         <p className="px-1 pt-1 text-xs text-muted-foreground">Digite para buscar na lista de militares.</p>
                       ) : (
                         <div className="max-h-48 overflow-y-auto rounded-md border bg-background shadow-sm">
                           {(() => {
-                            const q = entrySearch.trim().toLowerCase();
-                            const filtered = militares.filter(m => m.nome.toLowerCase().includes(q) || (m.nome_guerra ?? "").toLowerCase().includes(q));
+                            const filtered = militares.filter(m => matchesMilitar(m, entrySearch));
                             if (!filtered.length) return (
                               <div className="space-y-2 p-3 text-center text-sm">
                                 <p className="text-muted-foreground">Nenhum militar encontrado.</p>
@@ -588,7 +593,7 @@ function RegistrosPage() {
                       <Input value={editSearch} onChange={e => setEditSearch(e.target.value)} placeholder="Buscar militar..." className="pl-9" autoComplete="off" />
                     </div>
                     <div className="max-h-44 overflow-y-auto rounded-md border">
-                      {militares.filter(m => !editSearch || m.nome.toLowerCase().includes(editSearch.toLowerCase())).map(m => (
+                      {militares.filter(m => matchesMilitar(m, editSearch)).map(m => (
                         <button key={m.id} type="button" onClick={() => { setEditForm(f => ({ ...f, militar_id: m.id })); setEditSearch(""); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-accent">
                           <span className="flex-1 truncate">{m.nome}</span>
                           {m.nome_guerra && <span className="text-xs text-muted-foreground">{m.nome_guerra}</span>}

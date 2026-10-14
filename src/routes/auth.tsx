@@ -19,8 +19,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { POSTOS, postoPlural } from "@/lib/taf";
+import { matchesMilitar } from "@/lib/military-search";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({ meta: [{"title": "Acesso e cadastro | TAF CCAP"}, {"name": "description", "content": "Acesso e cadastro de militares da Companhia CCAP para acompanhamento de TAF."}, {"property": "og:title", "content": "Acesso e cadastro | TAF CCAP"}, {"property": "og:description", "content": "Acesso e cadastro de militares da Companhia CCAP para acompanhamento de TAF."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: AuthPage,
 });
 
@@ -119,8 +121,9 @@ function AuthPage() {
   const [resendCooldown, setResendCooldown] = useState(0); // segundos restantes
 
   const [militares, setMilitares] = useState<
-    { id: string; nome: string; posto: string; disponivel: boolean }[]
+    { id: string; nome: string; nome_guerra: string | null; posto: string; disponivel: boolean }[]
   >([]);
+  const [militarSearch, setMilitarSearch] = useState("");
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
 
@@ -131,8 +134,8 @@ function AuthPage() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from("militares_disponiveis" as any)
-        .select("id, nome, posto, disponivel");
+        .from("militares_disponiveis")
+        .select("id, nome, nome_guerra, posto, disponivel");
       if (Array.isArray(data)) setMilitares(data as any);
     })();
   }, []);
@@ -468,6 +471,7 @@ function AuthPage() {
                   {requestedRole === "companhia" && (
                     <div className="space-y-1">
                       <Label>Seu nome na lista</Label>
+                      <Input aria-label="Buscar seu nome na lista" placeholder="Nome completo ou de guerra..." value={militarSearch} onChange={e => setMilitarSearch(e.target.value)} autoComplete="off" />
                       <Select value={militarId} onValueChange={setMilitarId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
@@ -484,7 +488,7 @@ function AuthPage() {
                             }
                             const grupos = POSTOS.filter((c) => cats.includes(c.value));
                             const total = grupos.reduce(
-                              (n, cat) => n + militares.filter((m) => m.posto === cat.value).length,
+                              (n, cat) => n + militares.filter((m) => m.posto === cat.value && matchesMilitar(m, militarSearch)).length,
                               0,
                             );
                             if (total === 0) {
@@ -495,7 +499,7 @@ function AuthPage() {
                               );
                             }
                             return grupos.map((cat) => {
-                              const list = militares.filter((m) => m.posto === cat.value);
+                              const list = militares.filter((m) => m.posto === cat.value && matchesMilitar(m, militarSearch));
                               if (!list.length) return null;
                               return (
                                 <div key={cat.value}>
@@ -509,6 +513,7 @@ function AuthPage() {
                                       disabled={!m.disponivel}
                                     >
                                       {m.nome}
+                                      {m.nome_guerra && ` — ${m.nome_guerra}`}
                                       {!m.disponivel && " (já registrado)"}
                                     </SelectItem>
                                   ))}

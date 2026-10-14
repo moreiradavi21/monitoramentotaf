@@ -12,6 +12,7 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { extractMencoes, mencaoColor, POSTOS } from "@/lib/taf";
 
 export const Route = createFileRoute("/meus-resultados")({
+  head: () => ({ meta: [{"title": "Meus resultados | TAF CCAP"}, {"name": "description", "content": "Consulta pessoal dos resultados de TAF e confirmação de ciência."}, {"property": "og:title", "content": "Meus resultados | TAF CCAP"}, {"property": "og:description", "content": "Consulta pessoal dos resultados de TAF e confirmação de ciência."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: MeusResultadosPage,
 });
 

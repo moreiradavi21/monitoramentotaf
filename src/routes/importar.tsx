@@ -132,6 +132,7 @@ type Grupo = {
 // ── Rota ──────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/importar")({
+  head: () => ({ meta: [{"title": "Importar efetivo | TAF CCAP"}, {"name": "description", "content": "Importação da relação de militares da Companhia CCAP por pelotões."}, {"property": "og:title", "content": "Importar efetivo | TAF CCAP"}, {"property": "og:description", "content": "Importação da relação de militares da Companhia CCAP por pelotões."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAdmin>
       <ImportarPage />

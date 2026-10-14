@@ -8,6 +8,7 @@ import {
   HeadContent,
   Scripts,
   Link,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
@@ -41,6 +42,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { matchesMilitar } from "@/lib/military-search";
 
 
 function NotFoundComponent() {
@@ -54,7 +56,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -65,7 +67,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Erro ao carregar</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
         <button
           onClick={() => {
             router.invalidate();
@@ -264,14 +266,15 @@ function CompleteProfile({ userId, onComplete }: { userId: string; onComplete: (
   const [nome, setNome] = useState("");
   const [posto, setPosto] = useState("");
   const [militarId, setMilitarId] = useState("");
-  const [militares, setMilitares] = useState<{ id: string; nome: string; posto: string }[]>([]);
+  const [militares, setMilitares] = useState<{ id: string; nome: string; nome_guerra: string | null; posto: string }[]>([]);
+  const [militarSearch, setMilitarSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const auth = useAuth();
 
   useEffect(() => {
     supabase
       .from("militares_disponiveis" as any)
-      .select("id, nome, posto")
+      .select("id, nome, nome_guerra, posto")
       .then(({ data }) => { if (Array.isArray(data)) setMilitares(data as any); });
   }, []);
 
@@ -339,13 +342,14 @@ function CompleteProfile({ userId, onComplete }: { userId: string; onComplete: (
             {posto && (
               <div className="space-y-1">
                 <Label>Seu nome na lista de militares</Label>
+                <Input aria-label="Buscar militar para completar cadastro" placeholder="Nome completo ou de guerra..." value={militarSearch} onChange={e => setMilitarSearch(e.target.value)} />
                 <Select value={militarId} onValueChange={setMilitarId}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {militares
-                      .filter((m) => !posto || m.posto === posto || true)
+                      .filter((m) => matchesMilitar(m, militarSearch))
                       .map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.nome} — {m.posto}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.nome}{m.nome_guerra ? ` — ${m.nome_guerra}` : ""} — {m.posto}</SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
