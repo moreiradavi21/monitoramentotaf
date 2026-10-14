@@ -3,6 +3,7 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { Pencil, Trash2, UserPlus, Search, FileSpreadsheet, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { matchesMilitar } from "@/lib/military-search";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -358,7 +359,7 @@ function MilitaresPage() {
   const filtered = useMemo(() => {
     return militares.filter((m) => {
       if (filter !== "todos" && m.posto !== filter) return false;
-      if (q && !m.nome.toLowerCase().includes(q.toLowerCase())) return false;
+      if (!matchesMilitar(m, q)) return false;
       return true;
     });
   }, [militares, filter, q]);
@@ -521,7 +522,7 @@ function MilitaresPage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
-              placeholder="Buscar militar pelo nome..."
+              placeholder="Nome completo ou de guerra..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />

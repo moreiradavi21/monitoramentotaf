@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
+import { matchesMilitar, normalizeSearch } from "@/lib/military-search";
 import {
   Download,
   Search,
@@ -44,7 +45,7 @@ function CientesPage() {
 
   /** Registros que têm ciente_at preenchido para o TAF/chamada selecionado */
   const cientes = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = normalizeSearch(search);
     return resultados
       .filter(
         (r) =>
@@ -61,8 +62,7 @@ function CientesPage() {
       .filter(({ militar }) => {
         if (!q) return true;
         return (
-          militar.nome.toLowerCase().includes(q) ||
-          (militar.nome_guerra ?? "").toLowerCase().includes(q) ||
+          matchesMilitar(militar, search) ||
           (militar.posto ?? "").toLowerCase().includes(q)
         );
       });
@@ -168,7 +168,7 @@ function CientesPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar militar..."
+            placeholder="Nome completo ou de guerra..."
             className="pl-9"
           />
         </div>

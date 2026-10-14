@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { matchesMilitar } from "@/lib/military-search";
 import {
   ArrowLeft,
   Users,
@@ -116,13 +117,7 @@ function PelotaoPage() {
 
   // Lista filtrada e ordenada
   const listaMilitares = useMemo(() => {
-    const query = busca.toLowerCase().trim();
-    let list = militares.filter(
-      (m) =>
-        !query ||
-        m.nome.toLowerCase().includes(query) ||
-        (m.nome_guerra ?? "").toLowerCase().includes(query),
-    );
+    let list = militares.filter(m => matchesMilitar(m, busca));
 
     const MENCAO_SCORE: Record<string, number> = {
       E: 5, EXCELENTE: 5, MB: 4, "MUITO BOM": 4,
@@ -321,7 +316,7 @@ function PelotaoPage() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome…"
+                placeholder="Nome completo ou de guerra…"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 className="pl-8"
