@@ -272,6 +272,7 @@ function ImportDialog() {
 }
 
 export const Route = createFileRoute("/militares")({
+  head: () => ({ meta: [{"title": "Militares | TAF CCAP"}, {"name": "description", "content": "Relação de militares da Companhia CCAP, nomes de guerra e pelotões."}, {"property": "og:title", "content": "Militares | TAF CCAP"}, {"property": "og:description", "content": "Relação de militares da Companhia CCAP, nomes de guerra e pelotões."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAdmin>
       <MilitaresPage />

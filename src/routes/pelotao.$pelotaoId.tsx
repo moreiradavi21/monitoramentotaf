@@ -34,6 +34,7 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { RequireAdmin } from "@/components/require-admin";
 
 export const Route = createFileRoute("/pelotao/$pelotaoId")({
+  head: () => ({ meta: [{"title": "Pelotão | TAF CCAP"}, {"name": "description", "content": "Resultados de aptidão física e militares do pelotão da Companhia CCAP."}, {"property": "og:title", "content": "Pelotão | TAF CCAP"}, {"property": "og:description", "content": "Resultados de aptidão física e militares do pelotão da Companhia CCAP."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAdmin>
       <PelotaoPage />

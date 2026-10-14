@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/aprovacoes")({
+  head: () => ({ meta: [{"title": "Aprovação de contas | TAF CCAP"}, {"name": "description", "content": "Gestão de solicitações de acesso de avaliadores e administradores da Companhia CCAP."}, {"property": "og:title", "content": "Aprovação de contas | TAF CCAP"}, {"property": "og:description", "content": "Gestão de solicitações de acesso de avaliadores e administradores da Companhia CCAP."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAdmin>
       <AprovacoesPage />

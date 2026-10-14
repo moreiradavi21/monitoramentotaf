@@ -22,6 +22,7 @@ import { POSTOS, postoPlural } from "@/lib/taf";
 import { matchesMilitar } from "@/lib/military-search";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({ meta: [{"title": "Acesso e cadastro | TAF CCAP"}, {"name": "description", "content": "Acesso e cadastro de militares da Companhia CCAP para acompanhamento de TAF."}, {"property": "og:title", "content": "Acesso e cadastro | TAF CCAP"}, {"property": "og:description", "content": "Acesso e cadastro de militares da Companhia CCAP para acompanhamento de TAF."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: AuthPage,
 });
 

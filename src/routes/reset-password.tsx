@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
+  head: () => ({ meta: [{"title": "Recuperar senha | TAF CCAP"}, {"name": "description", "content": "Redefinição de senha para acesso ao sistema de TAF da Companhia CCAP."}, {"property": "og:title", "content": "Recuperar senha | TAF CCAP"}, {"property": "og:description", "content": "Redefinição de senha para acesso ao sistema de TAF da Companhia CCAP."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ResetPasswordPage,
 });
 

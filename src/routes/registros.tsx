@@ -65,6 +65,7 @@ import {
 import { RequireAvaliador } from "@/components/require-admin";
 
 export const Route = createFileRoute("/registros")({
+  head: () => ({ meta: [{"title": "Resultados e não realização | TAF CCAP"}, {"name": "description", "content": "Registros de TAF e planilhas dos militares que não realizaram por chamada e pelotão."}, {"property": "og:title", "content": "Resultados e não realização | TAF CCAP"}, {"property": "og:description", "content": "Registros de TAF e planilhas dos militares que não realizaram por chamada e pelotão."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAvaliador>
       <RegistrosPage />

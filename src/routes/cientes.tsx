@@ -21,6 +21,7 @@ import { useMilitares, useResultados } from "@/lib/data";
 import { RequireAdmin } from "@/components/require-admin";
 
 export const Route = createFileRoute("/cientes")({
+  head: () => ({ meta: [{"title": "Cientes | TAF CCAP"}, {"name": "description", "content": "Controle de ciência dos resultados dos militares da Companhia CCAP."}, {"property": "og:title", "content": "Cientes | TAF CCAP"}, {"property": "og:description", "content": "Controle de ciência dos resultados dos militares da Companhia CCAP."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequireAdmin>
       <CientesPage />
