@@ -224,18 +224,21 @@ export type Database = {
           disponivel: boolean | null
           id: string | null
           nome: string | null
+          nome_guerra: string | null
           posto: Database["public"]["Enums"]["posto_graduacao"] | null
         }
         Insert: {
           disponivel?: never
           id?: string | null
           nome?: string | null
+          nome_guerra?: string | null
           posto?: Database["public"]["Enums"]["posto_graduacao"] | null
         }
         Update: {
           disponivel?: never
           id?: string | null
           nome?: string | null
+          nome_guerra?: string | null
           posto?: Database["public"]["Enums"]["posto_graduacao"] | null
         }
         Relationships: []
