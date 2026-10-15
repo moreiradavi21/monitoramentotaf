@@ -1,4 +1,4 @@
-import { CHAMADAS, TAF_NUMEROS, pelotaoLabel } from "./taf";
+import { TAF_NUMEROS, pelotaoLabel } from "./taf";
 import { normalizeSearch } from "./military-search";
 import type { Militar, TafResultado } from "./data";
 
@@ -13,19 +13,18 @@ export function realizouTaf(result: Performance): boolean {
     || /^(e|excelente|mb|muito bom|b|bom|r|regular|suf|suficiente|i|insuf|insuficiente)$/.test(mention);
 }
 
-/** One absence per selected TAF/call; all expands to the six possible sessions. */
+/** All calls considers a TAF performed if either call was performed; one row per absent TAF. */
 export function getTafAbsences(militares: Militar[], resultados: Performance[], taf: TafSelection, chamada: ChamadaSelection) {
   const tafs = taf === "todos" ? TAF_NUMEROS : [Number(taf)];
-  const chamadas = chamada === "todos" ? CHAMADAS : [Number(chamada)];
-  const performed = new Set(resultados.filter(realizouTaf).map(r => `${r.militar_id}:${r.taf_numero}:${r.chamada}`));
   return [...militares].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).flatMap(militar =>
-    tafs.flatMap(tafNumero => chamadas.flatMap(chamadaNumero => {
-      const key = `${militar.id}:${tafNumero}:${chamadaNumero}`;
-      if (performed.has(key)) return [];
-      const record = resultados.find(r => `${r.militar_id}:${r.taf_numero}:${r.chamada}` === key);
-      return [{ militar, taf: tafNumero, chamada: chamadaNumero,
-        situacao: record?.mencao || "Sem registro", observacoes: record?.observacoes ?? "" }];
-    })),
+    tafs.flatMap(tafNumero => {
+      const records = resultados.filter(r => r.militar_id === militar.id && r.taf_numero === tafNumero
+        && (chamada === "todos" ? r.chamada === 1 || r.chamada === 2 : r.chamada === Number(chamada)));
+      if (records.some(realizouTaf)) return [];
+      return [{ militar, taf: tafNumero, chamada: chamada === "todos" ? null : Number(chamada),
+        situacao: [...new Set(records.map(r => r.mencao).filter(Boolean))].join(" / ") || "Sem registro",
+        observacoes: [...new Set(records.map(r => r.observacoes).filter(Boolean))].join(" / ") }];
+    }),
   );
 }
 

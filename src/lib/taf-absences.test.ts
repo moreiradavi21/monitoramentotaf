@@ -20,9 +20,28 @@ describe("absence report selection", () => {
     assert.deepEqual(getTafAbsences(militares, [record()], "1", "1").map(r => r.militar.id), ["b"]);
     assert.deepEqual(getTafAbsences(militares, [record()], "1", "2").map(r => [r.militar.id, r.chamada]), [["a", 2], ["b", 2]]);
   });
-  test("all expands to three TAFs and two calls", () => {
+  test("all TAFs and calls lists one absence per TAF", () => {
     const rows = getTafAbsences([militares[0]], [], "todos", "todos");
-    assert.deepEqual(rows.map(r => [r.taf, r.chamada]), [[1, 1], [1, 2], [2, 1], [2, 2], [3, 1], [3, 2]]);
+    assert.deepEqual(rows.map(r => [r.taf, r.chamada]), [[1, null], [2, null], [3, null]]);
+  });
+  test("all calls excludes a soldier who performed the first call", () => {
+    assert.deepEqual(getTafAbsences(militares, [record({ chamada: 1 })], "1", "todos").map(r => r.militar.id), ["b"]);
+  });
+  test("all calls excludes a soldier who performed the second call even if first was dispensed", () => {
+    const results = [record({ chamada: 1, flexao: null, mencao: "DISPENSADO" }), record({ chamada: 2 })];
+    assert.deepEqual(getTafAbsences(militares, results, "1", "todos").map(r => r.militar.id), ["b"]);
+  });
+  test("specific first call still lists soldiers who only performed the second call", () => {
+    assert.deepEqual(getTafAbsences(militares, [record({ chamada: 2 })], "1", "1").map(r => r.militar.id), ["a", "b"]);
+  });
+  test("performance in one TAF does not exclude absences in other TAFs", () => {
+    assert.deepEqual(getTafAbsences([militares[0]], [record({ chamada: 2 })], "todos", "todos").map(r => r.taf), [2, 3]);
+  });
+  test("dispensed in both calls remains absent once with reasons preserved", () => {
+    const results = [record({ flexao: null, mencao: "DISPENSADO", observacoes: "Licença" }), record({ chamada: 2, flexao: null, mencao: "DISPENSADO", observacoes: "Atestado" })];
+    const rows = getTafAbsences([militares[0]], results, "1", "todos");
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].observacoes, "Licença / Atestado");
   });
   test("includes dispensed soldiers and their reason", () => {
     const rows = getTafAbsences(militares, [record({ flexao: null, mencao: "DISPENSADO", observacoes: "Licença" })], "1", "1");
