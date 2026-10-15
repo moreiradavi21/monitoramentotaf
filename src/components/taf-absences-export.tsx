@@ -24,11 +24,11 @@ export function TafAbsencesExport({ militares, resultados, loading }: { militare
         const data = group.map(row => ({
           "Pelotão": pelotao, "Nome completo": row.militar.nome,
           "Nome de guerra": row.militar.nome_guerra ?? "", "Posto/Graduação": postoLabel(row.militar.posto),
-          "TAF": `${row.taf}º TAF`, "Chamada": `${row.chamada}ª Chamada`,
+          "TAF": `${row.taf}º TAF`, "Chamada": row.chamada === null ? "Todas as chamadas" : `${row.chamada}ª Chamada`,
           "Situação": row.situacao, "Observações": row.observacoes,
         }));
         const ws = XLSX.utils.json_to_sheet(data);
-        ws["!cols"] = [24, 45, 24, 20, 12, 16, 24, 50].map(wch => ({ wch }));
+        ws["!cols"] = [24, 45, 24, 20, 12, 22, 24, 50].map(wch => ({ wch }));
         ws["!autofilter"] = { ref: ws["!ref"] ?? "A1:H1" };
         const name = `${index + 1} ${pelotao}`.replace(/[\\/\[\]*?:]/g, " ").slice(0, 31);
         XLSX.utils.book_append_sheet(wb, ws, name);
