@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Users, Activity, TrendingUp, AlertTriangle, Trophy } from "lucide-react";
+import { Users, Activity, TrendingUp, AlertTriangle, Trophy, Search, CheckCircle2, Clock } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, type Posto } from "@/lib/taf";
+import { POSTOS, TAF_NUMEROS, CHAMADAS, mencaoColor, mencaoMedia, pelotaoLabel, type Posto } from "@/lib/taf";
+import { matchesMilitar } from "@/lib/military-search";
 import { useMilitares, useResultados } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
