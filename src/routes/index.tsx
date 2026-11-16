@@ -71,6 +71,18 @@ function Dashboard() {
     [resultados, taf, chamada],
   );
 
+  /** Busca por nome completo ou de guerra (sem acentos) na edição selecionada */
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return [];
+    return militares
+      .filter((m) => matchesMilitar(m, search))
+      .map((m) => ({
+        militar: m,
+        resultado: resultsForEdicao.find((r) => r.militar_id === m.id) ?? null,
+      }))
+      .sort((a, b) => a.militar.nome.localeCompare(b.militar.nome, "pt-BR"));
+  }, [militares, resultsForEdicao, search]);
+
   const byPosto = useMemo(() => {
     return POSTOS.map((p) => {
       const list = militares.filter((m) => m.posto === p.value);
