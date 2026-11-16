@@ -146,17 +146,23 @@ function AprovacoesPage() {
 
   const isStaff = (r: string | null) => r === "avaliador" || r === "administrador";
 
+  // Busca por nome (sem acentos) aplicada a todas as listas
+  const q = normalizeSearch(search);
+  const visible = q
+    ? profiles.filter((p) => normalizeSearch(p.nome ?? "").includes(q))
+    : profiles;
+
   // ── Pendentes: avaliador/admin aguardam aprovação manual ──
-  const pendingStaff = profiles.filter((p) => !p.approved && isStaff(p.requested_role));
+  const pendingStaff = visible.filter((p) => !p.approved && isStaff(p.requested_role));
 
   // ── Aprovados separados por grupo ──
-  const approvedStaff = profiles.filter((p) => p.approved && isStaff(p.requested_role));
+  const approvedStaff = visible.filter((p) => p.approved && isStaff(p.requested_role));
   // Companhia ativas (approved=true) — excluindo IDs deletados localmente
-  const activeCia = profiles.filter(
+  const activeCia = visible.filter(
     (p) => !isStaff(p.requested_role) && p.approved && !locallyDeleted.has(p.id),
   );
   // Companhia pendentes (approved=false) — criadas antes da migração de auto-aprovação
-  const pendingCia = profiles.filter(
+  const pendingCia = visible.filter(
     (p) => !isStaff(p.requested_role) && !p.approved && !locallyDeleted.has(p.id),
   );
 
