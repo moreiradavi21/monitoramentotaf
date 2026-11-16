@@ -214,6 +214,18 @@ function AprovacoesPage() {
         </p>
       </div>
 
+      {/* Busca de conta por nome */}
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar conta por nome..."
+          className="pl-9"
+          autoComplete="off"
+        />
+      </div>
+
       {/* ── Pendentes de aprovação (apenas Avaliador / Admin) ── */}
       <Card>
         <CardHeader className="pb-3">
