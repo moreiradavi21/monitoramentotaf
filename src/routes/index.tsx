@@ -54,6 +54,7 @@ function mencaoScore(m: string | null | undefined): number {
 function Dashboard() {
   const [taf, setTaf] = useState<number>(1);
   const [chamada, setChamada] = useState<number>(1);
+  const [search, setSearch] = useState("");
   const { isAdmin, isAvaliador, isCompanhia } = useAuth();
   const militaresQ = useMilitares();
   const resQ = useResultados();
