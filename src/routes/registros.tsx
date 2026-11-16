@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Download, Check, UserPlus, Search, ChevronRight, 
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { matchesMilitar } from "@/lib/military-search";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { TafAbsencesExport } from "@/components/taf-absences-export";
 import { useAuth } from "@/lib/auth";
 
@@ -139,9 +140,10 @@ function RegistrosPage() {
   const [activeTab, setActiveTab] = useState<"resultados" | "pendentes">("resultados");
 
   // ── Filtros (resultados) ──
-  const [fTaf, setFTaf] = useState<string>("todos");
-  const [fCh, setFCh] = useState<string>("todos");
-  const [fPosto, setFPosto] = useState<string>("todos");
+  const [fTaf, setFTaf] = useState<string[]>([]);
+  const [fCh, setFCh] = useState<string[]>([]);
+  const [fPosto, setFPosto] = useState<string[]>([]);
+  const [fBusca, setFBusca] = useState("");
 
   // ── Filtros (pendentes) ──
   const [pTaf, setPTaf] = useState<number>(1);
@@ -297,11 +299,13 @@ function RegistrosPage() {
     [resultados, isAdmin, user?.id],
   );
   const filtrados = useMemo(() => resultadosPorPapel.filter(r => {
-    if (fTaf !== "todos" && r.taf_numero !== Number(fTaf)) return false;
-    if (fCh !== "todos" && r.chamada !== Number(fCh)) return false;
-    if (fPosto !== "todos" && militarById.get(r.militar_id)?.posto !== fPosto) return false;
+    if (fTaf.length && !fTaf.includes(String(r.taf_numero))) return false;
+    if (fCh.length && !fCh.includes(String(r.chamada))) return false;
+    const m = militarById.get(r.militar_id);
+    if (fPosto.length && !(m && fPosto.includes(m.posto))) return false;
+    if (fBusca.trim() && !(m && matchesMilitar(m, fBusca))) return false;
     return true;
-  }), [resultadosPorPapel, fTaf, fCh, fPosto, militarById]);
+  }), [resultadosPorPapel, fTaf, fCh, fPosto, fBusca, militarById]);
 
   // ── Pendentes: militares sem resultado na edição selecionada ──
   const pendentes = useMemo(() => {
@@ -763,18 +767,13 @@ function RegistrosPage() {
           {/* Filtros */}
           <Card>
             <CardContent className="flex flex-wrap gap-2 p-3">
-              <Select value={fTaf} onValueChange={setFTaf}>
-                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todos">Todos TAFs</SelectItem>{TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={fCh} onValueChange={setFCh}>
-                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todos">Todas chamadas</SelectItem>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={fPosto} onValueChange={setFPosto}>
-                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todos">Todas categorias</SelectItem>{POSTOS.map(p => <SelectItem key={p.value} value={p.value}>{p.plural}</SelectItem>)}</SelectContent>
-              </Select>
+              <div className="relative w-full sm:w-[260px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60" />
+                <Input value={fBusca} onChange={e => setFBusca(e.target.value)} placeholder="Buscar nome completo ou de guerra..." className="pl-9" autoComplete="off" />
+              </div>
+              <MultiSelectFilter className="w-[140px]" allLabel="Todos TAFs" value={fTaf} onChange={setFTaf} options={TAF_NUMEROS.map(n => ({ value: String(n), label: `${n}º TAF` }))} />
+              <MultiSelectFilter className="w-[160px]" allLabel="Todas chamadas" value={fCh} onChange={setFCh} options={CHAMADAS.map(c => ({ value: String(c), label: `${c}ª Chamada` }))} />
+              <MultiSelectFilter className="w-[170px]" allLabel="Todas categorias" value={fPosto} onChange={setFPosto} options={POSTOS.map(p => ({ value: p.value, label: p.plural }))} />
               <div className="ml-auto flex items-center"><Badge variant="outline">{filtrados.length} registro(s)</Badge></div>
             </CardContent>
           </Card>
