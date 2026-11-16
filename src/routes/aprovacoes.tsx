@@ -72,6 +72,7 @@ function AprovacoesPage() {
   });
 
   const [pickedRole, setPickedRole] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
 
   // IDs excluídos localmente — persistidos no localStorage para não reaparecerem no refresh
   const [locallyDeleted, setLocallyDeleted] = useState<Set<string>>(() => {
