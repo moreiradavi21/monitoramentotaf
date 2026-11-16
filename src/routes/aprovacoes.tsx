@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserCheck, UserX, ShieldCheck, Users, Trash2 } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, Users, Trash2, Search } from "lucide-react";
 import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { normalizeSearch } from "@/lib/military-search";
 import {
   Select,
   SelectContent,
@@ -70,6 +72,7 @@ function AprovacoesPage() {
   });
 
   const [pickedRole, setPickedRole] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
 
   // IDs excluídos localmente — persistidos no localStorage para não reaparecerem no refresh
   const [locallyDeleted, setLocallyDeleted] = useState<Set<string>>(() => {
@@ -143,17 +146,23 @@ function AprovacoesPage() {
 
   const isStaff = (r: string | null) => r === "avaliador" || r === "administrador";
 
+  // Busca por nome (sem acentos) aplicada a todas as listas
+  const q = normalizeSearch(search);
+  const visible = q
+    ? profiles.filter((p) => normalizeSearch(p.nome ?? "").includes(q))
+    : profiles;
+
   // ── Pendentes: avaliador/admin aguardam aprovação manual ──
-  const pendingStaff = profiles.filter((p) => !p.approved && isStaff(p.requested_role));
+  const pendingStaff = visible.filter((p) => !p.approved && isStaff(p.requested_role));
 
   // ── Aprovados separados por grupo ──
-  const approvedStaff = profiles.filter((p) => p.approved && isStaff(p.requested_role));
+  const approvedStaff = visible.filter((p) => p.approved && isStaff(p.requested_role));
   // Companhia ativas (approved=true) — excluindo IDs deletados localmente
-  const activeCia = profiles.filter(
+  const activeCia = visible.filter(
     (p) => !isStaff(p.requested_role) && p.approved && !locallyDeleted.has(p.id),
   );
   // Companhia pendentes (approved=false) — criadas antes da migração de auto-aprovação
-  const pendingCia = profiles.filter(
+  const pendingCia = visible.filter(
     (p) => !isStaff(p.requested_role) && !p.approved && !locallyDeleted.has(p.id),
   );
 
@@ -203,6 +212,18 @@ function AprovacoesPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Autorize ou revogue o acesso ao sistema por conta.
         </p>
+      </div>
+
+      {/* Busca de conta por nome */}
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar conta por nome..."
+          className="pl-9"
+          autoComplete="off"
+        />
       </div>
 
       {/* ── Pendentes de aprovação (apenas Avaliador / Admin) ── */}
