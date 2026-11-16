@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserCheck, UserX, ShieldCheck, Users, Trash2 } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, Users, Trash2, Search } from "lucide-react";
 import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { normalizeSearch } from "@/lib/military-search";
 import {
   Select,
   SelectContent,
