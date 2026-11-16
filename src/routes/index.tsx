@@ -191,6 +191,87 @@ function Dashboard() {
         </Tabs>
       </div>
 
+      {/* Busca de militar na edição selecionada */}
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nome completo ou de guerra..."
+          className="pl-9"
+          autoComplete="off"
+        />
+      </div>
+
+      {search.trim() && (
+        <Card className="border-border/70">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-lg tracking-wide text-primary">
+              Resultado da busca — {taf}º TAF · {chamada}ª Chamada
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="space-y-3 p-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : searchResults.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-muted-foreground">
+                Nenhum militar encontrado para "{search}".
+              </p>
+            ) : (
+              <div className="divide-y divide-border">
+                {searchResults.map(({ militar, resultado }) => (
+                  <div
+                    key={militar.id}
+                    className="flex flex-wrap items-center gap-3 px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium leading-tight">
+                        {militar.nome}
+                      </p>
+                      <div className="mt-0.5 flex flex-wrap gap-2">
+                        {militar.nome_guerra && (
+                          <span className="text-xs text-muted-foreground">
+                            {militar.nome_guerra}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground/70">
+                          {POSTOS.find((p) => p.value === militar.posto)?.label ?? militar.posto}
+                          {militar.pelotao ? ` · ${pelotaoLabel(militar.pelotao)}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                    {resultado ? (
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Realizou
+                        </span>
+                        {resultado.mencao && (
+                          <span
+                            className={`inline-block rounded border px-2 py-0.5 font-display text-sm ${mencaoColor(resultado.mencao)}`}
+                          >
+                            {resultado.mencao}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                        <Clock className="h-3.5 w-3.5" />
+                        Não realizou
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Users className="h-4 w-4" />}
