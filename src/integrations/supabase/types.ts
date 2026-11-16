@@ -272,6 +272,10 @@ export type Database = {
         Returns: undefined
       }
       marcar_ciente: { Args: { _resultado_id: string }; Returns: undefined }
+      restore_companhia_profile: {
+        Args: { _militar_id: string; _nome: string; _posto: string }
+        Returns: undefined
+      }
       revoke_profile: { Args: { _profile_id: string }; Returns: undefined }
     }
     Enums: {
