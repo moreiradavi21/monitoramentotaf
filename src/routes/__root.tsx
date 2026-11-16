@@ -286,22 +286,12 @@ function CompleteProfile({ userId, onComplete }: { userId: string; onComplete: (
     }
     setLoading(true);
     try {
-      // Cria/restaura o perfil com auto-aprovação (igual ao trigger do signup)
-      const { error: profErr } = await supabase.from("profiles" as any).upsert({
-        id: userId,
-        nome: nome.trim(),
-        posto,
-        requested_role: "companhia",
-        approved: true,
-        militar_id: militarId,
+      const { error: profErr } = await supabase.rpc("restore_companhia_profile" as any, {
+        _nome: nome.trim(),
+        _posto: posto,
+        _militar_id: militarId,
       });
       if (profErr) throw profErr;
-
-      // Tenta restaurar o papel (pode falhar por RLS — admin precisará aprovar se falhar)
-      await supabase.from("user_roles" as any).upsert({
-        user_id: userId,
-        role: "user",
-      });
 
       // Recarrega o perfil — se user_roles foi inserido, o usuário entra direto
       await onComplete();
