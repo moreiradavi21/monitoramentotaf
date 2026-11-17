@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
 
 import { POSTOS, PELOTOES, CATEGORIAS_TAF, pelotaoLabel, postoLabel, type Posto } from "@/lib/taf";
 import {
@@ -288,7 +289,7 @@ function MilitaresPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Militar | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Militar | null>(null);
-  const [filter, setFilter] = useState<Posto | "todos">("todos");
+  const [filter, setFilter] = useState<string[]>([]);
   const [q, setQ] = useState("");
 
   const [nome, setNome] = useState("");
@@ -359,7 +360,7 @@ function MilitaresPage() {
 
   const filtered = useMemo(() => {
     return militares.filter((m) => {
-      if (filter !== "todos" && m.posto !== filter) return false;
+      if (filter.length > 0 && !filter.includes(m.posto)) return false;
       if (!matchesMilitar(m, q)) return false;
       return true;
     });
@@ -528,19 +529,13 @@ function MilitaresPage() {
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
-          <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todas as categorias</SelectItem>
-              {POSTOS.map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  {p.plural}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            className="w-[200px]"
+            allLabel="Todas as categorias"
+            value={filter}
+            onChange={setFilter}
+            options={POSTOS.map((p) => ({ value: p.value, label: p.plural }))}
+          />
         </CardContent>
       </Card>
 

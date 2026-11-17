@@ -5,3 +5,4 @@
 - [x] Testar regras e verificar o fluxo de busca e download.
 - [x] Aplicar atualização de segurança obrigatória.
 - [x] Permitir seleção de mais de uma categoria na aba Pendentes de Registros.
+- [x] Permitir seleção de mais de uma categoria na tela Militares.
