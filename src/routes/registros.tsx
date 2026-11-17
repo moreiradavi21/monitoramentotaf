@@ -147,7 +147,7 @@ function RegistrosPage() {
 
   // ── Filtros (pendentes) ──
   const [pTaf, setPTaf] = useState<number>(1);
-  const [pCh, setPCh] = useState<number>(1);
+  const [pCh, setPCh] = useState<string[]>([]);
   const [pPosto, setPPosto] = useState<string[]>([]);
 
   // ── Justificativa ──
@@ -308,14 +308,18 @@ function RegistrosPage() {
   }), [resultadosPorPapel, fTaf, fCh, fPosto, fBusca, militarById]);
 
   // ── Pendentes: militares sem resultado na edição selecionada ──
+  // Com várias chamadas marcadas (ou "Todas"), o militar só é pendente se
+  // não tiver registro em NENHUMA das chamadas selecionadas.
+  const pChNums = useMemo(() => (pCh.length ? pCh.map(Number) : [...CHAMADAS]), [pCh]);
+  const pChLabel = pCh.length === 0 ? "Todas as chamadas" : pCh.map(c => `${c}ª`).join(" e ") + " Chamada";
   const pendentes = useMemo(() => {
     const comResultado = new Set(
-      resultados.filter(r => r.taf_numero === pTaf && r.chamada === pCh).map(r => r.militar_id)
+      resultados.filter(r => r.taf_numero === pTaf && pChNums.includes(r.chamada)).map(r => r.militar_id)
     );
     return militares
       .filter(m => !comResultado.has(m.id))
       .filter(m => !pPosto.length || pPosto.includes(m.posto));
-  }, [militares, resultados, pTaf, pCh, pPosto]);
+  }, [militares, resultados, pTaf, pChNums, pPosto]);
 
   // ── Salvar justificativa (cria resultado DISPENSADO) ──
   async function salvarJustificativa() {
@@ -326,7 +330,7 @@ function RegistrosPage() {
       await save.mutateAsync({
         militar_id: justMilitar.id,
         taf_numero: pTaf,
-        chamada: pCh,
+        chamada: pCh.length ? Number(pCh[0]) : 1,
         data_aplicacao: new Date().toISOString().slice(0, 10),
         flexao: null, abdominal: null, corrida_metros: null, barra: null,
         nota_flexao: null, nota_abdominal: null, nota_corrida: null, nota_barra: null, nota_final: null,
@@ -717,7 +721,7 @@ function RegistrosPage() {
               <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
                 <span className="font-medium">{justMilitar.nome}</span>
                 {justMilitar.nome_guerra && <span className="ml-2 text-muted-foreground">({justMilitar.nome_guerra})</span>}
-                <div className="mt-0.5 text-xs text-muted-foreground">{pTaf}º TAF · {pCh}ª Chamada</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{pTaf}º TAF · {pCh.length ? `${pCh[0]}ª Chamada` : "1ª Chamada"}</div>
               </div>
             )}
             <div className="space-y-2">
@@ -878,10 +882,7 @@ function RegistrosPage() {
                 <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{TAF_NUMEROS.map(n => <SelectItem key={n} value={String(n)}>{n}º TAF</SelectItem>)}</SelectContent>
               </Select>
-              <Select value={String(pCh)} onValueChange={v => setPCh(Number(v))}>
-                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
-              </Select>
+              <MultiSelectFilter className="w-[160px]" allLabel="Todas chamadas" value={pCh} onChange={setPCh} options={CHAMADAS.map(c => ({ value: String(c), label: `${c}ª Chamada` }))} />
               <MultiSelectFilter className="w-[170px]" allLabel="Todas categorias" value={pPosto} onChange={setPPosto} options={POSTOS.map(p => ({ value: p.value, label: p.plural }))} />
               <div className="ml-auto flex items-center">
                 <Badge variant={pendentes.length > 0 ? "destructive" : "outline"}>{pendentes.length} pendente(s)</Badge>
@@ -894,7 +895,7 @@ function RegistrosPage() {
             {isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Carregando...</p>}
             {!isLoading && pendentes.length === 0 && (
               <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">
-                Todos os militares realizaram ou foram dispensados do {pTaf}º TAF · {pCh}ª Chamada.
+                Todos os militares realizaram ou foram dispensados do {pTaf}º TAF · {pChLabel}.
               </CardContent></Card>
             )}
             {pendentes.map(m => (
@@ -923,7 +924,7 @@ function RegistrosPage() {
           <Card className="hidden md:block">
             <CardHeader className="pb-2">
               <CardTitle className="font-display text-lg tracking-wide text-primary">
-                Militares sem registro — {pTaf}º TAF · {pCh}ª Chamada
+                Militares sem registro — {pTaf}º TAF · {pChLabel}
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto p-0">
@@ -940,7 +941,7 @@ function RegistrosPage() {
                   {isLoading && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Carregando...</td></tr>}
                   {!isLoading && pendentes.length === 0 && (
                     <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                      Todos os militares realizaram ou foram dispensados do {pTaf}º TAF · {pCh}ª Chamada.
+                      Todos os militares realizaram ou foram dispensados do {pTaf}º TAF · {pChLabel}.
                     </td></tr>
                   )}
                   {pendentes.map(m => (
