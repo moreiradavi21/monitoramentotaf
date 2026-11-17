@@ -148,7 +148,7 @@ function RegistrosPage() {
   // ── Filtros (pendentes) ──
   const [pTaf, setPTaf] = useState<number>(1);
   const [pCh, setPCh] = useState<number>(1);
-  const [pPosto, setPPosto] = useState<string>("todos");
+  const [pPosto, setPPosto] = useState<string[]>([]);
 
   // ── Justificativa ──
   const [justOpen, setJustOpen] = useState(false);
@@ -314,7 +314,7 @@ function RegistrosPage() {
     );
     return militares
       .filter(m => !comResultado.has(m.id))
-      .filter(m => pPosto === "todos" || m.posto === pPosto);
+      .filter(m => !pPosto.length || pPosto.includes(m.posto));
   }, [militares, resultados, pTaf, pCh, pPosto]);
 
   // ── Salvar justificativa (cria resultado DISPENSADO) ──
@@ -882,10 +882,7 @@ function RegistrosPage() {
                 <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{CHAMADAS.map(c => <SelectItem key={c} value={String(c)}>{c}ª Chamada</SelectItem>)}</SelectContent>
               </Select>
-              <Select value={pPosto} onValueChange={setPPosto}>
-                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todos">Todas categorias</SelectItem>{POSTOS.map(p => <SelectItem key={p.value} value={p.value}>{p.plural}</SelectItem>)}</SelectContent>
-              </Select>
+              <MultiSelectFilter className="w-[170px]" allLabel="Todas categorias" value={pPosto} onChange={setPPosto} options={POSTOS.map(p => ({ value: p.value, label: p.plural }))} />
               <div className="ml-auto flex items-center">
                 <Badge variant={pendentes.length > 0 ? "destructive" : "outline"}>{pendentes.length} pendente(s)</Badge>
               </div>
