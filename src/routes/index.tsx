@@ -1,3 +1,4 @@
+import { calcIdade, mencaoPorIdade, type ExercicioIdx } from "@/lib/indices";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Users, Activity, TrendingUp, AlertTriangle, Trophy, Search, CheckCircle2, Clock } from "lucide-react";
@@ -103,7 +104,7 @@ function Dashboard() {
     });
   }, [militares, resultsForEdicao]);
 
-  // Top 4 Cabos, Soldados e Recrutas — ranking por menção final, depois por soma de exercícios
+  // Top 4 Cabos, Soldados e Recrutas — ranking ponderado (corrida/barra peso 2, flexão 1,5, abdominal 1)
   const top4 = useMemo(() => {
     const elegíveis = militares.filter(
       (m) => m.posto === "cabo" || m.posto === "soldado" || m.posto === "recruta",
@@ -112,13 +113,19 @@ function Dashboard() {
       .map((militar) => {
         const r = resultsForEdicao.find((x) => x.militar_id === militar.id);
         if (!r) return null;
-        const score = mencaoScore(r.mencao);
-        if (!score) return null; // sem menção registrada
+        if (!mencaoScore(r.mencao)) return null; // sem menção registrada
+        const idade = calcIdade(militar.data_nascimento, r.data_aplicacao);
+        const cat = (militar as { categoria_taf?: string | null }).categoria_taf ?? null;
+        const pts = (ex: ExercicioIdx, v: number | null | undefined) =>
+          mencaoScore(mencaoPorIdade(ex, idade, v, cat));
+        // Pesos: corrida 2, barra 2, flexão 1,5, abdominal 1
+        const score =
+          pts("corrida", r.corrida_metros) * 2 +
+          pts("barra", r.barra) * 2 +
+          pts("flexao", r.flexao) * 1.5 +
+          pts("abdominal", r.abdominal) * 1;
         const exercTotal =
-          (r.corrida_metros ?? 0) +
-          (r.flexao ?? 0) * 10 + // peso para desempate
-          (r.abdominal ?? 0) * 10 +
-          (r.barra ?? 0) * 10;
+          (r.corrida_metros ?? 0) * 2 + (r.barra ?? 0) * 200 + (r.flexao ?? 0) * 150 + (r.abdominal ?? 0) * 100;
         return { militar, r, score, exercTotal };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null)
@@ -389,6 +396,10 @@ function Dashboard() {
                         <span className={`inline-block rounded border px-2 py-0.5 font-display text-lg ${mencaoColor(r.mencao)}`}>
                           {r.mencao ?? "—"}
                         </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Pontos</p>
+                        <p className={`font-display text-xl ${MEDAL_COLORS[idx]}`}>{score.toFixed(1)}</p>
                       </div>
                     </div>
                   );
